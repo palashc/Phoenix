@@ -14,3 +14,9 @@ type Job []Task
 func CreateRandTask() Task {
 	return Task(rand.Float32())
 }
+
+// Task Reservation for late-binding
+type TaskReservation struct {
+	requestID   string
+	schedulerID string
+}
