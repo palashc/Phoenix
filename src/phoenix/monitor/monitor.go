@@ -14,13 +14,26 @@ type NodeMonitor struct {
 	alock            sync.Mutex //for activeTasks
 	qlock            sync.Mutex //for queue
 	mlock            sync.Mutex //for maps
+	executorAddr     string
+	schedulerAddrs   []string
 	executorClient   executor.ExecutorClient
-	schedulerClients []scheduler.SchedulerClient
+	schedulerClients map[string]scheduler.SchedulerClient
 	cancelled        map[string]bool
-	taskSchedulerMap map[string]int
+	taskSchedulerMap map[string]string
 }
 
 const NUM_SLOTS = 4
+
+func NewNodeMonitor(executor string, schedulers []string) *NodeMonitor {
+
+	return &NodeMonitor{
+		executorAddr:     executor,
+		schedulerAddrs:   schedulers,
+		cancelled:        make(map[string]bool),
+		taskSchedulerMap: make(map[string]string),
+		schedulerClients: make(map[string]scheduler.SchedulerClient),
+	}
+}
 
 /* -------------------------- APIs exposed by NM ------------------------*/
 
@@ -48,7 +61,7 @@ func (nm *NodeMonitor) HandleEnqueueReservation(taskReservation *types.TaskReser
 	}
 
 	nm.mlock.Lock()
-	nm.taskSchedulerMap[taskReservation.TaskID] = taskReservation.SchedulerID
+	nm.taskSchedulerMap[taskReservation.TaskID] = taskReservation.SchedulerAddr
 	nm.mlock.Unlock()
 	return nil
 }
@@ -75,7 +88,7 @@ func (nm *NodeMonitor) HandleTaskComplete(taskID string, ret *bool) error {
 
 	//get the scheduler for the task
 	nm.mlock.Lock()
-	schedulerID, ok := nm.taskSchedulerMap[taskID]
+	schedulerAddr, ok := nm.taskSchedulerMap[taskID]
 	nm.mlock.Unlock()
 
 	*ret = false
@@ -84,9 +97,12 @@ func (nm *NodeMonitor) HandleTaskComplete(taskID string, ret *bool) error {
 	}
 
 	//notify scheduler about task completion
-	schedulerClient := nm.schedulerClients[schedulerID]
+	schedulerClient, err := nm.getSchedulerClient(schedulerAddr)
+	if err != nil {
+		return fmt.Errorf("Unable to get a scheduler client: %q", err)
+	}
 	var succ bool
-	err := schedulerClient.TaskComplete(taskID, &succ)
+	err = schedulerClient.TaskComplete(taskID, &succ)
 	if err != nil {
 		return fmt.Errorf("Unable to notify scheduler about task completion: %q", err)
 	}
@@ -126,14 +142,17 @@ Gets the task information from the scheduler for a reservation at the head of th
 */
 func (nm *NodeMonitor) getTask(taskReservation *types.TaskReservation) (*types.Task, error) {
 
-	schedulerID := taskReservation.SchedulerID
-	schedulerClient := nm.schedulerClients[schedulerID]
+	schedulerAddr := taskReservation.SchedulerAddr
+	schedulerClient, err := nm.getSchedulerClient(schedulerAddr)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to get a scheduler client: %q", err)
+	}
 	taskID := taskReservation.TaskID
 
 	var task types.Task
-	err := schedulerClient.getTask(taskID, &task)
+	err = schedulerClient.getTask(taskID, &task)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to get task %v from scheduler %v : %q", taskID, schedulerID, err)
+		return nil, fmt.Errorf("Unable to get task %v from scheduler %v : %q", taskID, schedulerAddr, err)
 	}
 
 	return &task, nil
@@ -145,7 +164,11 @@ Launch a task on the application executor.
 func (nm *NodeMonitor) launchTask(task *types.Task) error {
 
 	var ret bool
-	err := nm.executorClient.LaunchTask(*task, &ret)
+	executorClient, err := nm.getExecutorClient()
+	if err != nil {
+		return fmt.Errorf("Unable to get executor client: %q", err)
+	}
+	err = executorClient.LaunchTask(*task, &ret)
 	if err != nil {
 		return err
 	}
@@ -199,4 +222,18 @@ func (nm *NodeMonitor) getAndLaunchTask(taskReservation *types.TaskReservation) 
 	}
 
 	return nil
+}
+
+/*
+Returns the client for the executor rpc. Creates one if it is nil.
+*/
+func (nm *NodeMonitor) getExecutorClient() (executor.ExecutorClient, error) {
+	panic("todo")
+}
+
+/*
+Returns the client for the scheduler rpc. Creates one if it is nil.
+*/
+func (nm *NodeMonitor) getSchedulerClient(addr string) (scheduler.SchedulerClient, error) {
+	panic("todo")
 }

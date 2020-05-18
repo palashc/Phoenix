@@ -24,6 +24,6 @@ func CreateRandTask() Task {
 
 // Task Reservation for late-binding
 type TaskReservation struct {
-	TaskID      string
-	SchedulerID int
+	TaskID        string
+	SchedulerAddr string
 }
