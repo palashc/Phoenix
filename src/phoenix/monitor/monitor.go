@@ -2,6 +2,8 @@ package monitor
 
 import (
 	"fmt"
+	"phoenix/executor"
+	"phoenix/scheduler"
 	"phoenix/types"
 	"sync"
 )
@@ -9,13 +11,13 @@ import (
 type NodeMonitor struct {
 	activeTasks      int
 	queue            Queue
-	alock            sync.Mutex  //for activeTasks
-	qlock            sync.Mutex  //for queue
-	mlock            sync.Mutex  //for maps
-	executorClient   ExecutorClient
-	schedulerClients []SchedulerClient
+	alock            sync.Mutex //for activeTasks
+	qlock            sync.Mutex //for queue
+	mlock            sync.Mutex //for maps
+	executorClient   executor.ExecutorClient
+	schedulerClients []scheduler.SchedulerClient
 	cancelled        map[string]bool
-	taskSchedulerMap map[string]string
+	taskSchedulerMap map[string]int
 }
 
 const NUM_SLOTS = 4
@@ -32,26 +34,25 @@ func (nm *NodeMonitor) HandleEnqueueReservation(taskReservation *types.TaskReser
 	nm.alock.Lock()
 	defer nm.alock.Unlock()
 
-	if activeTasks < NUM_SLOTS {
+	if nm.activeTasks < NUM_SLOTS {
 		task, err := nm.getTask(taskReservation)
 		if err != nil {
-			return fmt.Errorf("[NM] Unable to get task %v from scheduler: %q", taskReservation.taskID, err)
+			return fmt.Errorf("[NM] Unable to get task %v from scheduler: %q", taskReservation.TaskID, err)
 		}
 
 		err = nm.launchTask(task)
 		if err != nil {
-			return fmt.Errorf("[NM] Unable to launch task %v on executor: %q", taskReservation.taskID, err)
+			return fmt.Errorf("[NM] Unable to launch task %v on executor: %q", taskReservation.TaskID, err)
 		}
 		nm.activeTasks++
-	}
-	else {
+	} else {
 		nm.qlock.Lock()
 		nm.queue.Enqueue(taskReservation)
 		nm.qlock.Unlock()
 	}
 
 	nm.mlock.Lock()
-	nm.taskSchedulerMap[taskReservation.taskID] = taskReservation.schedulerID
+	nm.taskSchedulerMap[taskReservation.TaskID] = taskReservation.SchedulerID
 	nm.mlock.Unlock()
 	return nil
 }
@@ -129,9 +130,9 @@ Gets the task information from the scheduler for a reservation at the head of th
 */
 func (nm *NodeMonitor) getTask(taskReservation *types.TaskReservation) (*types.Task, error) {
 
-	schedulerID := taskReservation.schedulerID
+	schedulerID := taskReservation.SchedulerID
 	schedulerClient := nm.schedulerClients[schedulerID]
-	taskID := taskReservation.taskID
+	taskID := taskReservation.TaskID
 
 	var task types.Task
 	err := schedulerClient.getTask(taskID, &task)
@@ -139,7 +140,7 @@ func (nm *NodeMonitor) getTask(taskReservation *types.TaskReservation) (*types.T
 		return nil, fmt.Errorf("Unable to get task %v from scheduler %v : %q", taskID, schedulerID, err)
 	}
 
-	return task, nil
+	return &task, nil
 }
 
 /*
