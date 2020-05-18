@@ -4,6 +4,7 @@ import (
 	"net"
 	"net/http"
 	"net/rpc"
+	"phoenix/config"
 )
 
 func GetNewClient(addr string) *NodeMonitorClient {

@@ -1,10 +1,10 @@
 package config
 
-import "phoenix/monitor"
+import "phoenix"
 
 type MonitorConfig struct {
 	Addr    string
-	Monitor monitor.NodeMonitor
+	Monitor phoenix.MonitorInterface
 	Ready   chan<- bool
 }
 
@@ -13,7 +13,7 @@ type PhoenixConfig struct {
 	Monitors   []string
 }
 
-func (pc *PhoenixConfig) MonitorConfig(i int, nm monitor.NodeMonitor) *MonitorConfig {
+func (pc *PhoenixConfig) MonitorConfig(i int, nm phoenix.MonitorInterface) *MonitorConfig {
 	ret := new(MonitorConfig)
 	ret.Addr = pc.Monitors[i]
 	ret.Monitor = nm

@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"fmt"
+	"phoenix"
 	"phoenix/executor"
 	"phoenix/scheduler"
 	"phoenix/types"
@@ -64,7 +65,7 @@ func (nm *NodeMonitor) EnqueueReservation(taskReservation *types.TaskReservation
 Returns number of queued tasks which have not been proactively cancelled.
 Will be used by scheduler for probing.
 */
-func (nm *NodeMonitor) GetNumQueuedTasks(_ignore int, n *int) error {
+func (nm *NodeMonitor) Probe(_ignore int, n *int) error {
 
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
@@ -252,3 +253,5 @@ func (nm *NodeMonitor) getSchedulerClient(addr string) (scheduler.SchedulerClien
 	}
 	return schedulerClient
 }
+
+var _ phoenix.MonitorInterface = new(NodeMonitor)
