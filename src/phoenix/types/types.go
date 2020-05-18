@@ -5,18 +5,25 @@ import (
 )
 
 // Task simulates Phoenix tasks with a sleep time between 0 and 1 seconds
-type Task float32
+type Task struct {
+	id string
+	T  float32
+}
 
 // Job is an array of Tasks
-type Job []Task
+type Job struct {
+	id    string
+	tasks []Task
+}
 
 // CreateRandTask creates Random-Lengthed Task that lasts between 0 and 1 seconds
+// TODO random string for id
 func CreateRandTask() Task {
-	return Task(rand.Float32())
+	return Task{T: rand.Float32()}
 }
 
 // Task Reservation for late-binding
 type TaskReservation struct {
-	requestID   string
+	taskID      string
 	schedulerID string
 }
