@@ -35,14 +35,9 @@ func (nm *NodeMonitor) HandleEnqueueReservation(taskReservation *types.TaskReser
 	defer nm.alock.Unlock()
 
 	if nm.activeTasks < NUM_SLOTS {
-		task, err := nm.getTask(taskReservation)
+		err := nm.getAndLaunchTask(taskReservation)
 		if err != nil {
-			return fmt.Errorf("[NM] Unable to get task %v from scheduler: %q", taskReservation.TaskID, err)
-		}
-
-		err = nm.launchTask(task)
-		if err != nil {
-			return fmt.Errorf("[NM] Unable to launch task %v on executor: %q", taskReservation.TaskID, err)
+			return err
 		}
 		nm.activeTasks++
 	} else {
@@ -72,8 +67,8 @@ func (nm *NodeMonitor) GetNumQueuedTasks(_ignore int, n *int) error {
 }
 
 /*
-On a taskComplete() rpc from the executor, launches a task from the head of the queue.
-Otherwise, blocks till a task is enqueued. Also calls taskComplete on the scheduler.
+On a taskComplete() rpc from the executor, calla taskComplete on the scheduler.
+Also, attempt to run the next task from the queue.
 */
 func (nm *NodeMonitor) HandleTaskComplete(taskID string, ret *bool) error {
 
@@ -102,8 +97,8 @@ func (nm *NodeMonitor) HandleTaskComplete(taskID string, ret *bool) error {
 	nm.activeTasks--
 	nm.alock.Unlock()
 
-	//TODO: launch next task from the queue
-	//use go routine so that this rpc does not block?
+	// launch next task from the queue
+	go nm.attemptLaunchTask()
 
 	*ret = true
 	return nil
@@ -155,6 +150,51 @@ func (nm *NodeMonitor) launchTask(task *types.Task) error {
 	}
 	if !ret {
 		return fmt.Errorf("Unable to launch task, executor returned false")
+	}
+
+	return nil
+}
+
+/*
+Blocks till a reservation is present in the queue, and then launches it.
+*/
+func (nm *NodeMonitor) attemptLaunchTask() {
+
+	var taskR types.TaskReservation
+	for {
+		nm.qlock.Lock()
+		_taskR := nm.queue.Dequeue()
+		nm.qlock.Unlock()
+
+		if taskR, ok := _taskR.(types.TaskReservation); ok {
+			break
+		}
+	}
+
+	nm.alock.Lock()
+	defer nm.alock.Unlock()
+
+	err := nm.getAndLaunchTask(&taskR)
+	if err != nil {
+		panic("Unable to launch next task")
+	}
+	nm.activeTasks++
+
+}
+
+/*
+Helper method to get a task and launch it
+*/
+func (nm *NodeMonitor) getAndLaunchTask(taskReservation *types.TaskReservation) error {
+
+	task, err := nm.getTask(taskReservation)
+	if err != nil {
+		return fmt.Errorf("[NM] Unable to get task %v from scheduler: %q", taskReservation.TaskID, err)
+	}
+
+	err = nm.launchTask(task)
+	if err != nil {
+		return fmt.Errorf("[NM] Unable to launch task %v on executor: %q", taskReservation.TaskID, err)
 	}
 
 	return nil
