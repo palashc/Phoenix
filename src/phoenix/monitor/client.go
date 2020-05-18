@@ -29,17 +29,61 @@ func (nmc *NodeMonitorClient) rpcConn() error {
 }
 
 func (nmc *NodeMonitorClient) EnqueueReservation(taskR *types.TaskReservation, pos *int) error {
-	panic("todo")
+
+	err := nmc.rpcConn()
+	if err != nil {
+		return err
+	}
+
+	err = nmc.conn.Call("NodeMonitor.HandleEnqueueReservation", taskR, pos)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (nmc *NodeMonitorClient) Probe(_ignore int, n *int) error {
-	panic("todo")
+
+	err := nmc.rpcConn()
+	if err != nil {
+		return err
+	}
+
+	err = nmc.conn.Call("NodeMonitor.GetNumQueuedTasks", _ignore, n)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (nmc *NodeMonitorClient) TaskComplete(taskID string, ret *bool) error {
-	panic("todo")
+
+	err := nmc.rpcConn()
+	if err != nil {
+		return err
+	}
+
+	err = nmc.conn.Call("NodeMonitor.HandleTaskComplete", taskID, ret)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (nmc *NodeMonitorClient) CancelTaskReservation(taskID string, ret *bool) error {
-	panic("todo")
+
+	err := nmc.rpcConn()
+	if err != nil {
+		return err
+	}
+
+	err = nmc.conn.Call("NodeMonitor.HandleCancelTaskReservation", taskID, ret)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
