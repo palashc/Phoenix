@@ -11,9 +11,7 @@ import (
 type NodeMonitor struct {
 	activeTasks      int
 	queue            Queue
-	alock            sync.Mutex //for activeTasks
-	qlock            sync.Mutex //for queue
-	mlock            sync.Mutex //for maps
+	lock             sync.Mutex
 	executorAddr     string
 	schedulerAddrs   []string
 	executorClient   executor.ExecutorClient
@@ -44,8 +42,8 @@ Otherwise, adds the reservation to the queue.
 */
 func (nm *NodeMonitor) HandleEnqueueReservation(taskReservation *types.TaskReservation, position *int) error {
 
-	nm.alock.Lock()
-	defer nm.alock.Unlock()
+	nm.lock.Lock()
+	defer nm.lock.Unlock()
 
 	if nm.activeTasks < NUM_SLOTS {
 		err := nm.getAndLaunchTask(taskReservation)
@@ -54,15 +52,11 @@ func (nm *NodeMonitor) HandleEnqueueReservation(taskReservation *types.TaskReser
 		}
 		nm.activeTasks++
 	} else {
-		nm.qlock.Lock()
 		nm.queue.Enqueue(taskReservation)
 		*position = nm.queue.Len()
-		nm.qlock.Unlock()
 	}
 
-	nm.mlock.Lock()
 	nm.taskSchedulerMap[taskReservation.TaskID] = taskReservation.SchedulerAddr
-	nm.mlock.Unlock()
 	return nil
 }
 
@@ -72,8 +66,8 @@ Will be used by scheduler for probing.
 */
 func (nm *NodeMonitor) GetNumQueuedTasks(_ignore int, n *int) error {
 
-	nm.qlock.Lock()
-	defer nm.qlock.Unlock()
+	nm.lock.Lock()
+	defer nm.lock.Unlock()
 
 	//TODO: subtract length of `cancelled` map?
 	*n = nm.queue.Len()
@@ -86,10 +80,11 @@ Also, attempt to run the next task from the queue.
 */
 func (nm *NodeMonitor) HandleTaskComplete(taskID string, ret *bool) error {
 
+	nm.lock.Lock()
+	defer nm.lock.Unlock()
+
 	//get the scheduler for the task
-	nm.mlock.Lock()
 	schedulerAddr, ok := nm.taskSchedulerMap[taskID]
-	nm.mlock.Unlock()
 
 	*ret = false
 	if !ok {
@@ -110,9 +105,7 @@ func (nm *NodeMonitor) HandleTaskComplete(taskID string, ret *bool) error {
 		return fmt.Errorf("Unable to notify scheduler about task completion")
 	}
 
-	nm.alock.Lock()
 	nm.activeTasks--
-	nm.alock.Unlock()
 
 	// launch next task from the queue
 	go nm.attemptLaunchTask()
@@ -127,8 +120,8 @@ This map is consulted before any task is launced.
 */
 func (nm *NodeMonitor) HandleCancelTaskReservation(taskID string, ret *bool) error {
 
-	nm.mlock.Lock()
-	defer nm.mlock.Unlock()
+	nm.lock.Lock()
+	defer nm.lock.Unlock()
 
 	nm.cancelled[taskID] = true
 	*ret = true
@@ -138,7 +131,7 @@ func (nm *NodeMonitor) HandleCancelTaskReservation(taskID string, ret *bool) err
 /* -------------------------- Internal APIs of the NM ------------------------*/
 
 /*
-Gets the task information from the scheduler for a reservation at the head of the queue.
+Gets the task information from the scheduler for a reservation.
 */
 func (nm *NodeMonitor) getTask(taskReservation *types.TaskReservation) (*types.Task, error) {
 
@@ -164,11 +157,11 @@ Launch a task on the application executor.
 func (nm *NodeMonitor) launchTask(task *types.Task) error {
 
 	var ret bool
-	executorClient, err := nm.getExecutorClient()
+	err := nm.refreshExecutorClient()
 	if err != nil {
 		return fmt.Errorf("Unable to get executor client: %q", err)
 	}
-	err = executorClient.LaunchTask(*task, &ret)
+	err = nm.executorClient.LaunchTask(*task, &ret)
 	if err != nil {
 		return err
 	}
@@ -186,17 +179,17 @@ func (nm *NodeMonitor) attemptLaunchTask() {
 
 	var taskR types.TaskReservation
 	for {
-		nm.qlock.Lock()
+		nm.lock.Lock()
 		_taskR := nm.queue.Dequeue()
-		nm.qlock.Unlock()
+		nm.lock.Unlock()
 
 		if taskR, ok := _taskR.(types.TaskReservation); ok {
 			break
 		}
 	}
 
-	nm.alock.Lock()
-	defer nm.alock.Unlock()
+	nm.lock.Lock()
+	defer nm.lock.Unlock()
 
 	err := nm.getAndLaunchTask(&taskR)
 	if err != nil {
@@ -227,13 +220,31 @@ func (nm *NodeMonitor) getAndLaunchTask(taskReservation *types.TaskReservation) 
 /*
 Returns the client for the executor rpc. Creates one if it is nil.
 */
-func (nm *NodeMonitor) getExecutorClient() (executor.ExecutorClient, error) {
-	panic("todo")
+func (nm *NodeMonitor) refreshExecutorClient() error {
+
+	nm.lock.Lock()
+	defer nm.lock.Unlock()
+
+	if nm.executorClient == nil {
+		executor, err := executor.GetNewClient(nm.executorAddr)
+		if err != nil {
+			return err
+		}
+		nm.executorClient = executor
+	}
+
+	return nil
 }
 
 /*
 Returns the client for the scheduler rpc. Creates one if it is nil.
 */
 func (nm *NodeMonitor) getSchedulerClient(addr string) (scheduler.SchedulerClient, error) {
-	panic("todo")
+
+	schedulerClient, ok := nm.schedulerClients[addr]
+	if !ok {
+		schedulerClient = scheduler.GetNewClient(addr)
+		nm.schedulerClients[addr] = schedulerClient
+	}
+	return schedulerClient
 }
