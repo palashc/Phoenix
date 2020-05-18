@@ -10,7 +10,7 @@ import (
 
 type NodeMonitor struct {
 	activeTasks      int
-	queue            Queue
+	queue            types.Queue
 	lock             sync.Mutex
 	executorAddr     string
 	schedulerAddrs   []string

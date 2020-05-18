@@ -1,4 +1,4 @@
-package monitor
+package types
 
 type (
 	Queue struct {
