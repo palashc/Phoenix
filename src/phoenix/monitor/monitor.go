@@ -43,6 +43,7 @@ func (nm *NodeMonitor) HandleEnqueueReservation(taskReservation *types.TaskReser
 	} else {
 		nm.qlock.Lock()
 		nm.queue.Enqueue(taskReservation)
+		*position = nm.queue.Len()
 		nm.qlock.Unlock()
 	}
 
