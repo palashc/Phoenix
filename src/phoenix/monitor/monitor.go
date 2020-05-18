@@ -71,7 +71,7 @@ func (nm *NodeMonitor) Probe(_ignore int, n *int) error {
 	defer nm.lock.Unlock()
 
 	//TODO: subtract length of `cancelled` map?
-	*n = nm.queue.Len()
+	*n = nm.queue.Len() - len(nm.cancelled)
 	return nil
 }
 
