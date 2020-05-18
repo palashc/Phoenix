@@ -185,7 +185,7 @@ func (nm *NodeMonitor) attemptLaunchTask() {
 
 		//check if taskR has a reservation for a task which was not cancelled
 		if taskR, ok := _taskR.(types.TaskReservation); ok {
-			tr, cancelled := nm.cancelled[taskR.taskID]
+			tr, cancelled := nm.cancelled[taskR.TaskID]
 			if !cancelled {
 				break
 			}
