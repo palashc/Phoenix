@@ -9,7 +9,7 @@ type NodeMonitor struct {
 	activeTasks      int
 	queue            Queue
 	lock             sync.Mutex
-	executor         executorClient
+	executorClient   ExecutorClient
 	schedulerClients map[string]SchedulerClient
 	cancelled        map[string]bool
 }
