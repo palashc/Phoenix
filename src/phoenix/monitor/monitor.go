@@ -1,8 +1,8 @@
 package monitor
 
 import (
+	"phoenix/types"
 	"sync"
-	"utils"
 )
 
 type NodeMonitor struct {
@@ -21,21 +21,21 @@ Handles an incoming task reservation from the scheduler.
 Gets and launches the task if there is a slot available.
 Otherwise, adds the reservation to the queue.
 */
-func (nm *NodeMonitor) handleEnqueueReservation(taskReservation *utils.TaskReservation) error {
+func (nm *NodeMonitor) handleEnqueueReservation(taskReservation *types.TaskReservation) error {
 	panic("todo")
 }
 
 /*
 Gets the task information from the scheduler for a reservation at the head of the queue.
 */
-func (nm *NodeMonitor) getTask(taskReservation *utils.TaskReservation) (utils.Task, error) {
+func (nm *NodeMonitor) getTask(taskReservation *types.TaskReservation) (types.Task, error) {
 	panic("todo")
 }
 
 /*
 Launch a task on the application executor.
 */
-func (nm *NodeMonitor) launchTask(*utils.Task) error {
+func (nm *NodeMonitor) launchTask(*types.Task) error {
 	panic("todo")
 }
 
