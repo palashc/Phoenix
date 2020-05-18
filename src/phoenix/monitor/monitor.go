@@ -40,7 +40,7 @@ Handles an incoming task reservation from the scheduler.
 Gets and launches the task if there is a slot available.
 Otherwise, adds the reservation to the queue.
 */
-func (nm *NodeMonitor) HandleEnqueueReservation(taskReservation *types.TaskReservation, position *int) error {
+func (nm *NodeMonitor) EnqueueReservation(taskReservation *types.TaskReservation, position *int) error {
 
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
@@ -78,7 +78,7 @@ func (nm *NodeMonitor) GetNumQueuedTasks(_ignore int, n *int) error {
 On a taskComplete() rpc from the executor, calla taskComplete on the scheduler.
 Also, attempt to run the next task from the queue.
 */
-func (nm *NodeMonitor) HandleTaskComplete(taskID string, ret *bool) error {
+func (nm *NodeMonitor) TaskComplete(taskID string, ret *bool) error {
 
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
@@ -118,7 +118,7 @@ func (nm *NodeMonitor) HandleTaskComplete(taskID string, ret *bool) error {
 Adds the requestID of the proactively cancelled task to a map.
 This map is consulted before any task is launced.
 */
-func (nm *NodeMonitor) HandleCancelTaskReservation(taskID string, ret *bool) error {
+func (nm *NodeMonitor) CancelTaskReservation(taskID string, ret *bool) error {
 
 	nm.lock.Lock()
 	defer nm.lock.Unlock()

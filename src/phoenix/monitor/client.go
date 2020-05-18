@@ -35,7 +35,7 @@ func (nmc *NodeMonitorClient) EnqueueReservation(taskR *types.TaskReservation, p
 		return err
 	}
 
-	err = nmc.conn.Call("NodeMonitor.HandleEnqueueReservation", taskR, pos)
+	err = nmc.conn.Call("NodeMonitor.EnqueueReservation", taskR, pos)
 	if err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func (nmc *NodeMonitorClient) TaskComplete(taskID string, ret *bool) error {
 		return err
 	}
 
-	err = nmc.conn.Call("NodeMonitor.HandleTaskComplete", taskID, ret)
+	err = nmc.conn.Call("NodeMonitor.TaskComplete", taskID, ret)
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func (nmc *NodeMonitorClient) CancelTaskReservation(taskID string, ret *bool) er
 		return err
 	}
 
-	err = nmc.conn.Call("NodeMonitor.HandleCancelTaskReservation", taskID, ret)
+	err = nmc.conn.Call("NodeMonitor.CancelTaskReservation", taskID, ret)
 	if err != nil {
 		return err
 	}
