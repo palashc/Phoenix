@@ -9,6 +9,12 @@ import (
 
 var DefaultConfigPath = "phoenix_config.conf"
 
+type ExecutorConfig struct {
+	Addr	string
+	Executor phoenix.ExecutorServer
+	Ready chan<- bool
+}
+
 type MonitorConfig struct {
 	Addr    string
 	Monitor phoenix.MonitorInterface
@@ -20,7 +26,7 @@ type PhoenixConfig struct {
 	Monitors   []string
 }
 
-func (pc *PhoenixConfig) MonitorConfig(i int, nm phoenix.MonitorInterface) *MonitorConfig {
+func (pc *PhoenixConfig) NewMonitorConfig(i int, nm phoenix.MonitorInterface) *MonitorConfig {
 	ret := new(MonitorConfig)
 	ret.Addr = pc.Monitors[i]
 	ret.Monitor = nm
@@ -77,4 +83,10 @@ func (self *PhoenixConfig) marshal() []byte {
 	}
 
 	return b
+
+func (pc *PhoenixConfig) NewExecutorConfig(addr string, ec phoenix.ExecutorServer) *ExecutorConfig{
+	return &ExecutorConfig{
+		Addr: addr,
+		Executor: ec,
+	}
 }
