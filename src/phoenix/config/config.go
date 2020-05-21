@@ -7,6 +7,8 @@ import (
 	"phoenix"
 )
 
+var DefaultConfigPath = "phoenix_config.conf"
+
 type MonitorConfig struct {
 	Addr    string
 	Monitor phoenix.MonitorInterface
