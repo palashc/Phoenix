@@ -12,7 +12,7 @@ func GetNewClient(addr string) *ExecutorClient {
 }
 
 // Serve as a backend based on the given configuration
-func ServeMonitor(b *config.ExecutorConfig) error {
+func ServeExecutor(b *config.ExecutorConfig) error {
 
 	server := rpc.NewServer()
 
