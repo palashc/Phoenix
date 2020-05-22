@@ -144,7 +144,7 @@ func (nm *NodeMonitor) getTask(taskReservation *types.TaskReservation) (*types.T
 	taskID := taskReservation.TaskID
 
 	var task types.Task
-	err = schedulerClient.getTask(taskID, &task)
+	err = schedulerClient.GetTask(taskID, &task)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to get task %v from scheduler %v : %q", taskID, schedulerAddr, err)
 	}
@@ -186,7 +186,7 @@ func (nm *NodeMonitor) attemptLaunchTask() {
 
 		//check if taskR has a reservation for a task which was not cancelled
 		if taskR, ok := _taskR.(types.TaskReservation); ok {
-			tr, cancelled := nm.cancelled[taskR.TaskID]
+			_, cancelled := nm.cancelled[taskR.TaskID]
 			if !cancelled {
 				break
 			}
@@ -248,10 +248,13 @@ func (nm *NodeMonitor) getSchedulerClient(addr string) (scheduler.SchedulerClien
 
 	schedulerClient, ok := nm.schedulerClients[addr]
 	if !ok {
-		schedulerClient = scheduler.GetNewClient(addr)
+		schedulerClient, err := scheduler.GetNewClient(addr)
+		if err != nil {
+			return nil, fmt.Errorf("Unable to get scheduler client")
+		}
 		nm.schedulerClients[addr] = schedulerClient
 	}
-	return schedulerClient
+	return schedulerClient, nil
 }
 
 var _ phoenix.MonitorInterface = new(NodeMonitor)
