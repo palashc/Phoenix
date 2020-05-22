@@ -16,7 +16,7 @@ type NodeMonitor struct {
 	executorAddr     string
 	schedulerAddrs   []string
 	executorClient   executor.ExecutorClient
-	schedulerClients map[string]scheduler.SchedulerClient
+	schedulerClients map[string]scheduler.TaskSchedulerClient
 	cancelled        map[string]bool
 	taskSchedulerMap map[string]string
 }
@@ -30,7 +30,7 @@ func NewNodeMonitor(executor string, schedulers []string) *NodeMonitor {
 		schedulerAddrs:   schedulers,
 		cancelled:        make(map[string]bool),
 		taskSchedulerMap: make(map[string]string),
-		schedulerClients: make(map[string]scheduler.SchedulerClient),
+		schedulerClients: make(map[string]scheduler.TaskSchedulerClient),
 	}
 }
 
@@ -98,7 +98,7 @@ func (nm *NodeMonitor) TaskComplete(taskID string, ret *bool) error {
 		return fmt.Errorf("Unable to get a scheduler client: %q", err)
 	}
 	var succ bool
-	err = schedulerClient.TaskComplete(taskID, &succ)
+	err = schedulerClient.NotifyTaskComplete(taskID, &succ)
 	if err != nil {
 		return fmt.Errorf("Unable to notify scheduler about task completion: %q", err)
 	}
@@ -144,7 +144,7 @@ func (nm *NodeMonitor) getTask(taskReservation *types.TaskReservation) (*types.T
 	taskID := taskReservation.TaskID
 
 	var task types.Task
-	err = schedulerClient.getTask(taskID, &task)
+	err = schedulerClient.GetTask(taskID, &task)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to get task %v from scheduler %v : %q", taskID, schedulerAddr, err)
 	}
@@ -244,14 +244,15 @@ func (nm *NodeMonitor) refreshExecutorClient() error {
 /*
 Returns the client for the scheduler rpc. Creates one if it is nil.
 */
-func (nm *NodeMonitor) getSchedulerClient(addr string) (scheduler.SchedulerClient, error) {
+func (nm *NodeMonitor) getSchedulerClient(addr string) (scheduler.TaskSchedulerClient, error) {
 
+	var err error
 	schedulerClient, ok := nm.schedulerClients[addr]
 	if !ok {
-		schedulerClient = scheduler.GetNewClient(addr)
+		schedulerClient, err = scheduler.GetNewTaskSchedulerClient(addr)
 		nm.schedulerClients[addr] = schedulerClient
 	}
-	return schedulerClient
+	return schedulerClient, err
 }
 
 var _ phoenix.MonitorInterface = new(NodeMonitor)

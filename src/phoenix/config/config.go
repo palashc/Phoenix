@@ -8,6 +8,12 @@ type MonitorConfig struct {
 	Ready   chan<- bool
 }
 
+type TaskSchedulerConfig struct {
+	Addr	string
+	TaskScheduler phoenix.TaskSchedulerInterface
+	Ready	chan<- bool
+}
+
 type PhoenixConfig struct {
 	Schedulers []string
 	Monitors   []string
