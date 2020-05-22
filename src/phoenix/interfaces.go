@@ -9,7 +9,7 @@ type ExecutorServer interface {
 
 	// Run a specified task
 	// net/rpc package mandates 2 parameter RPC calls
-	launchTask(task types.Task, ret *bool) error
+	LaunchTask(task types.Task, ret *bool) error
 }
 
 
@@ -18,4 +18,8 @@ type MonitorInterface interface {
 	Probe(_ignore int, n *int) error
 	TaskComplete(taskID string, ret *bool) error
 	CancelTaskReservation(taskID string, ret *bool) error
+}
+
+type SchedulerServer interface {
+
 }
