@@ -16,7 +16,7 @@ type NodeMonitor struct {
 	executorAddr     string
 	schedulerAddrs   []string
 	executorClient   *executor.ExecutorClient
-	schedulerClients map[string]*scheduler.TaskSchedulerClient
+	schedulerClients map[string]scheduler.TaskSchedulerClient
 	cancelled        map[string]bool
 	taskSchedulerMap map[string]string
 }
@@ -244,7 +244,7 @@ func (nm *NodeMonitor) refreshExecutorClient() error {
 /*
 Returns the client for the scheduler rpc. Creates one if it is nil.
 */
-func (nm *NodeMonitor) getSchedulerClient(addr string) (*scheduler.TaskSchedulerClient, error) {
+func (nm *NodeMonitor) getSchedulerClient(addr string) (scheduler.TaskSchedulerClient, error) {
 
 	schedulerClient, ok := nm.schedulerClients[addr]
 	if !ok {
@@ -252,7 +252,7 @@ func (nm *NodeMonitor) getSchedulerClient(addr string) (*scheduler.TaskScheduler
 		if err != nil {
 			return nil, fmt.Errorf("[getSchedulerClient] Unable to get scheduler client")
 		}
-		nm.schedulerClients[addr] = &schedulerClient
+		nm.schedulerClients[addr] = schedulerClient
 	}
 	return schedulerClient, nil
 }
