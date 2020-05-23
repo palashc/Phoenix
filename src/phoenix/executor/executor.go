@@ -36,7 +36,7 @@ type ECState struct {
 }
 
 // NewExecutor launches the executor backend
-func NewExecutor(myID int, mySlotCount int, myNmClient *phoenix.MonitorInterface) phoenix.ExecutorServer {
+func NewExecutor(myID int, mySlotCount int, myNmClient *phoenix.MonitorInterface) phoenix.ExecutorInterface {
 	ec := &ECState{
 		id:           myID,
 		slotCount:    mySlotCount,

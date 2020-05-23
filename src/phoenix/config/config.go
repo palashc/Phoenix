@@ -11,7 +11,7 @@ var DefaultConfigPath = "phoenix_config.conf"
 
 type ExecutorConfig struct {
 	Addr     string
-	Executor phoenix.ExecutorServer
+	Executor phoenix.ExecutorInterface
 	Ready    chan<- bool
 }
 
@@ -40,7 +40,7 @@ func (pc *PhoenixConfig) NewMonitorConfig(i int, nm phoenix.MonitorInterface) *M
 	return ret
 }
 
-func (pc *PhoenixConfig) NewExecutorConfig(addr string, ec phoenix.ExecutorServer) *ExecutorConfig {
+func (pc *PhoenixConfig) NewExecutorConfig(addr string, ec phoenix.ExecutorInterface) *ExecutorConfig {
 	return &ExecutorConfig{
 		Addr:     addr,
 		Executor: ec,

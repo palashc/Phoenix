@@ -80,7 +80,7 @@ func (nmc *NodeMonitorClient) CancelTaskReservation(jobID string, ret *bool) err
 		return err
 	}
 
-	err = nmc.conn.Call("NodeMonitor.CancelTaskReservation", taskID, ret)
+	err = nmc.conn.Call("NodeMonitor.CancelTaskReservation", jobID, ret)
 	if err != nil {
 		return err
 	}

@@ -5,7 +5,7 @@ import (
 )
 
 // ExecutorServer interface that all executors must implement
-type ExecutorServer interface {
+type ExecutorInterface interface {
 
 	// Run a specified task
 	// net/rpc package mandates 2 parameter RPC calls
