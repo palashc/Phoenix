@@ -1,10 +1,13 @@
 package types
 
 // Task simulates Phoenix tasks with a sleep time between 0 and 1 seconds
+
+type TaskID string
+
 type Task struct {
-	JobId string
-	Id    string
-	T     float32
+	JobId 	string
+	Id  	string
+	T     	float32
 }
 
 type TaskRecord struct {

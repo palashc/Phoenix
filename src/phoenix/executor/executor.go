@@ -26,23 +26,26 @@ type ECState struct {
 	taskChans []chan *types.Task
 
 	// buffered channel should have slotCount size
-	doneChan chan int
+	doneChan chan taskDone
 
 	// lock
 	lock sync.Mutex
 
 	// nmClient
-	nmClient *phoenix.MonitorInterface
+	nmClient phoenix.MonitorInterface
 }
 
 // NewExecutor launches the executor backend
-func NewExecutor(myID int, mySlotCount int, myNmClient *phoenix.MonitorInterface) phoenix.ExecutorInterface {
+// Pass an NmClient instead of the address so executor doesn't have to depend on phoenix/monitor and cause
+// an import cycle
+func NewExecutor(myID int, mySlotCount int, myNmClient phoenix.MonitorInterface) phoenix.ExecutorInterface {
+
 	ec := &ECState{
 		id:           myID,
 		slotCount:    mySlotCount,
 		availWorkers: make([]bool, mySlotCount),
 		taskChans:    make([]chan *types.Task, mySlotCount),
-		doneChan:     make(chan int, 4),
+		doneChan:     make(chan taskDone, mySlotCount),
 		nmClient:     myNmClient,
 	}
 
@@ -72,11 +75,22 @@ func (ec *ECState) initWorkerPool() {
 func (ec *ECState) WorkerCoordinator() {
 	for {
 		// find worker that has finished; block on doneChannel
-		wID := <-ec.doneChan
+		finishedTask := <-ec.doneChan
 
 		ec.lock.Lock()
-		ec.availWorkers[wID] = true
+		ec.availWorkers[finishedTask.workerID] = true
 		ec.lock.Unlock()
+
+		go func (id string) {
+			var succ bool
+			if err := ec.nmClient.TaskComplete(id, &succ); err != nil {
+				fmt.Errorf("[Executor: WorkerCoordinator]: Failed to invoke TaskComplete on TaskID: %s", id)
+			}
+
+			if !succ {
+				fmt.Errorf("[Executor: WorkerCoordinator]: Failed to invoke TaskComplete on TaskID: %s", id)
+			}
+		}(finishedTask.taskID)
 	}
 }
 

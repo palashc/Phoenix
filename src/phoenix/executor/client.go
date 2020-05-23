@@ -13,6 +13,10 @@ type ExecutorClient struct {
 	lock sync.Mutex
 }
 
+func GetNewClient(addr string) *ExecutorClient {
+	return &ExecutorClient{addr: addr}
+}
+
 func (ec *ExecutorClient) LaunchTask(task types.Task, ret *bool) error {
 
 	var err error

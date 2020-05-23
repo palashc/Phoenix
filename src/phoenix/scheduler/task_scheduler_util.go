@@ -7,10 +7,10 @@ import (
 	"phoenix/config"
 )
 
-func GetNewTaskSchedulerClient(addr string) (*TaskSchedulerClient, error) {
-	return &(TaskSchedulerClient{
+func GetNewTaskSchedulerClient(addr string) *TaskSchedulerClient {
+	return &TaskSchedulerClient{
 		addr: addr,
-	}), nil
+	}
 }
 
 func ServeTaskScheduler(b *config.TaskSchedulerConfig) error {

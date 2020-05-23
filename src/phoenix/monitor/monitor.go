@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"phoenix"
 	"phoenix/executor"
-	"phoenix/scheduler"
 	"phoenix/types"
 	"sync"
 )
@@ -24,16 +23,14 @@ type NodeMonitor struct {
 
 const NUM_SLOTS = 4
 
-func NewNodeMonitor(executor string, schedulers []string) *NodeMonitor {
+func NewNodeMonitor(executorClient phoenix.ExecutorInterface, schedulers map[string] phoenix.TaskSchedulerInterface) *NodeMonitor {
 
 	return &NodeMonitor{
-		executorAddr:     executor,
-		schedulerAddrs:   schedulers,
 		cancelled:        make(map[string]bool),
 		taskSchedulerMap: make(map[string]string),
 		jobSchedulerMap:  make(map[string]string),
-		schedulerClients: make(map[string]phoenix.TaskSchedulerInterface),
-		executorClient:   nil,
+		schedulerClients: schedulers,
+		executorClient:   executorClient,
 	}
 }
 
@@ -161,11 +158,7 @@ Launch a task on the application executor.
 func (nm *NodeMonitor) launchTask(task *types.Task) error {
 
 	var ret bool
-	err := nm.refreshExecutorClient()
-	if err != nil {
-		return fmt.Errorf("[LaunchTask] Unable to get executor client: %q", err)
-	}
-	err = nm.executorClient.LaunchTask(*task, &ret)
+	err := nm.executorClient.LaunchTask(*task, &ret)
 	if err != nil {
 		return err
 	}
@@ -250,16 +243,7 @@ func (nm *NodeMonitor) refreshExecutorClient() error {
 Returns the client for the scheduler rpc. Creates one if it is nil.
 */
 func (nm *NodeMonitor) getSchedulerClient(addr string) (phoenix.TaskSchedulerInterface, error) {
-
-	schedulerClient, ok := nm.schedulerClients[addr]
-	if !ok {
-		schedulerClient, err := scheduler.GetNewTaskSchedulerClient(addr)
-		if err != nil {
-			return nil, fmt.Errorf("[getSchedulerClient] Unable to get scheduler client")
-		}
-		nm.schedulerClients[addr] = schedulerClient
-	}
-	return schedulerClient, nil
+	return nm.schedulerClients[addr], nil
 }
 
 var _ phoenix.MonitorInterface = new(NodeMonitor)

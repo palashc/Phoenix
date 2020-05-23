@@ -12,6 +12,10 @@ type NodeMonitorClient struct {
 	lock sync.Mutex
 }
 
+func GetNewClient(addr string) *NodeMonitorClient {
+	return &NodeMonitorClient{addr: addr}
+}
+
 func (nmc *NodeMonitorClient) rpcConn() error {
 	nmc.lock.Lock()
 	defer nmc.lock.Unlock()
