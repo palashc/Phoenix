@@ -244,15 +244,11 @@ func (nm *NodeMonitor) refreshExecutorClient() error {
 /*
 Returns the client for the scheduler rpc. Creates one if it is nil.
 */
-func (nm *NodeMonitor) getSchedulerClient(addr string) (scheduler.SchedulerClient, error) {
+func (nm *NodeMonitor) getSchedulerClient(addr string) (phoenix.SchedulerServer, error) {
 
 	schedulerClient, ok := nm.schedulerClients[addr]
 	if !ok {
-		schedulerClient, err := scheduler.GetNewClient(addr)
-		if err != nil {
-			return nil, fmt.Errorf("Unable to get scheduler client")
-		}
-		nm.schedulerClients[addr] = schedulerClient
+		nm.schedulerClients[addr] = scheduler.GetNewClient(addr)
 	}
 	return schedulerClient, nil
 }

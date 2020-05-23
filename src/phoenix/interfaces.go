@@ -21,5 +21,6 @@ type MonitorInterface interface {
 }
 
 type SchedulerServer interface {
-
+	TaskComplete(taskID string, ret *bool) error
+	GetTask(taskID string, task *types.Task) error
 }

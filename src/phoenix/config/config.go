@@ -34,6 +34,13 @@ func (pc *PhoenixConfig) NewMonitorConfig(i int, nm phoenix.MonitorInterface) *M
 	return ret
 }
 
+func (pc *PhoenixConfig) NewExecutorConfig(addr string, ec phoenix.ExecutorServer) *ExecutorConfig{
+	return &ExecutorConfig{
+		Addr: addr,
+		Executor: ec,
+	}
+}
+
 func (self *PhoenixConfig) Save(p string) error {
 	b := self.marshal()
 
@@ -83,10 +90,4 @@ func (self *PhoenixConfig) marshal() []byte {
 	}
 
 	return b
-
-func (pc *PhoenixConfig) NewExecutorConfig(addr string, ec phoenix.ExecutorServer) *ExecutorConfig{
-	return &ExecutorConfig{
-		Addr: addr,
-		Executor: ec,
-	}
 }
