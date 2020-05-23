@@ -4,11 +4,10 @@ import (
 	"net"
 	"net/http"
 	"net/rpc"
-	"phoenix"
 	"phoenix/config"
 )
 
-func GetNewTaskSchedulerClient(addr string) phoenix.TaskSchedulerInterface {
+func GetNewTaskSchedulerClient(addr string) *TaskSchedulerClient {
 	return &TaskSchedulerClient{
 		addr: addr,
 	}

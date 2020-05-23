@@ -2,7 +2,6 @@ package executor
 
 import (
 	"net/rpc"
-	"phoenix"
 	"phoenix/types"
 
 	"sync"
@@ -14,7 +13,7 @@ type ExecutorClient struct {
 	lock sync.Mutex
 }
 
-func GetNewClient(addr string) phoenix.ExecutorInterface {
+func GetNewClient(addr string) *ExecutorClient {
 	return &ExecutorClient{addr: addr}
 }
 
