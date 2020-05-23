@@ -27,7 +27,7 @@ func main() {
 			noError(fmt.Errorf("index out of range: %d", i))
 		}
 
-		mConfig := rc.MonitorConfig(i, monitor.NewNodeMonitor("", []string{}))
+		mConfig := rc.NewMonitorConfig(i, monitor.NewNodeMonitor("", []string{}))
 
 		log.Printf("monitor serving on %s", mConfig.Addr)
 		noError(monitor.ServeMonitor(mConfig))

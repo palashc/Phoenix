@@ -9,6 +9,12 @@ import (
 
 var DefaultConfigPath = "phoenix_config.conf"
 
+type ExecutorConfig struct {
+	Addr     string
+	Executor phoenix.ExecutorServer
+	Ready    chan<- bool
+}
+
 type MonitorConfig struct {
 	Addr    string
 	Monitor phoenix.MonitorInterface
@@ -26,7 +32,7 @@ type PhoenixConfig struct {
 	Monitors   []string
 }
 
-func (pc *PhoenixConfig) MonitorConfig(i int, nm phoenix.MonitorInterface) *MonitorConfig {
+func (pc *PhoenixConfig) NewMonitorConfig(i int, nm phoenix.MonitorInterface) *MonitorConfig {
 	ret := new(MonitorConfig)
 	ret.Addr = pc.Monitors[i]
 	ret.Monitor = nm
@@ -34,8 +40,15 @@ func (pc *PhoenixConfig) MonitorConfig(i int, nm phoenix.MonitorInterface) *Moni
 	return ret
 }
 
-func (self *PhoenixConfig) Save(p string) error {
-	b := self.marshal()
+func (pc *PhoenixConfig) NewExecutorConfig(addr string, ec phoenix.ExecutorServer) *ExecutorConfig {
+	return &ExecutorConfig{
+		Addr:     addr,
+		Executor: ec,
+	}
+}
+
+func (pc *PhoenixConfig) Save(p string) error {
+	b := pc.marshal()
 
 	fout, e := os.Create(p)
 	if e != nil {
@@ -55,8 +68,8 @@ func (self *PhoenixConfig) Save(p string) error {
 	return fout.Close()
 }
 
-func (self *PhoenixConfig) String() string {
-	b := self.marshal()
+func (pc *PhoenixConfig) String() string {
+	b := pc.marshal()
 	return string(b)
 }
 
@@ -76,8 +89,8 @@ func LoadConfig(p string) (*PhoenixConfig, error) {
 	return ret, nil
 }
 
-func (self *PhoenixConfig) marshal() []byte {
-	b, e := json.MarshalIndent(self, "", "    ")
+func (pc *PhoenixConfig) marshal() []byte {
+	b, e := json.MarshalIndent(pc, "", "    ")
 	if e != nil {
 		panic(e)
 	}

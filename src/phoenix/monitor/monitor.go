@@ -16,7 +16,7 @@ type NodeMonitor struct {
 	executorAddr     string
 	schedulerAddrs   []string
 	executorClient   *executor.ExecutorClient
-	schedulerClients map[string]scheduler.TaskSchedulerClient
+	schedulerClients map[string]*scheduler.TaskSchedulerClient
 	cancelled        map[string]bool
 	taskSchedulerMap map[string]string
 }
@@ -231,9 +231,9 @@ func (nm *NodeMonitor) refreshExecutorClient() error {
 	defer nm.lock.Unlock()
 
 	if nm.executorClient == nil {
-		executorClient, err := executor.GetNewClient(nm.executorAddr)
-		if err != nil {
-			return err
+		executorClient := executor.GetNewClient(nm.executorAddr)
+		if executorClient != nil {
+			return fmt.Errorf("[RefreshExecutor] Could not instantiate executor client")
 		}
 		nm.executorClient = executorClient
 	}
@@ -244,7 +244,7 @@ func (nm *NodeMonitor) refreshExecutorClient() error {
 /*
 Returns the client for the scheduler rpc. Creates one if it is nil.
 */
-func (nm *NodeMonitor) getSchedulerClient(addr string) (scheduler.TaskSchedulerClient, error) {
+func (nm *NodeMonitor) getSchedulerClient(addr string) (*scheduler.TaskSchedulerClient, error) {
 
 	schedulerClient, ok := nm.schedulerClients[addr]
 	if !ok {
