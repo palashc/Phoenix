@@ -7,6 +7,10 @@ import (
 	"phoenix/config"
 )
 
+func GetNewClient(addr string) *ExecutorClient {
+	return &ExecutorClient{addr: addr}
+}
+
 // Serve as a backend based on the given configuration
 func ServeExecutor(b *config.ExecutorConfig) error {
 

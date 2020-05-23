@@ -15,6 +15,12 @@ type ExecutorConfig struct {
 	Ready chan<- bool
 }
 
+type ExecutorConfig struct {
+	Addr	string
+	Executor phoenix.ExecutorServer
+	Ready chan<- bool
+}
+
 type MonitorConfig struct {
 	Addr    string
 	Monitor phoenix.MonitorInterface
