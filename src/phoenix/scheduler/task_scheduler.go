@@ -2,7 +2,6 @@ package scheduler
 
 import (
 	"fmt"
-	"math"
 	"math/rand"
 	"phoenix"
 	"phoenix/monitor"
@@ -109,6 +108,11 @@ func (ts *TaskScheduler) GetTask(jobId string, task *types.Task) error {
 		//ts.taskAllocationLock.Unlock()
 	}
 	ts.jobStatusLock.Unlock()
+
+	// No task got assigned
+	if task == nil {
+		// TODO: I need to know who's the requester to call cancellation.
+	}
 
 	return nil
 }

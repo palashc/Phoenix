@@ -53,6 +53,7 @@ func (tsc *TaskSchedulerClient) GetTask(taskId string, task *types.Task) error {
 		return err
 	}
 
+	task = nil
 	err = tsc.conn.Call("TaskScheduler.GetTask", taskId, task)
 	if err != nil {
 		return err
