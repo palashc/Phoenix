@@ -15,8 +15,8 @@ type NodeMonitor struct {
 	lock             sync.Mutex
 	executorAddr     string
 	schedulerAddrs   []string
-	executorClient   executor.ExecutorClient
-	schedulerClients map[string]scheduler.SchedulerClient
+	executorClient   *executor.ExecutorClient
+	schedulerClients map[string] *scheduler.SchedulerClient
 	cancelled        map[string]bool
 	taskSchedulerMap map[string]string
 }
@@ -30,7 +30,7 @@ func NewNodeMonitor(executor string, schedulers []string) *NodeMonitor {
 		schedulerAddrs:   schedulers,
 		cancelled:        make(map[string]bool),
 		taskSchedulerMap: make(map[string]string),
-		schedulerClients: make(map[string]scheduler.SchedulerClient),
+		schedulerClients: make(map[string]*scheduler.SchedulerClient),
 	}
 }
 
@@ -231,9 +231,9 @@ func (nm *NodeMonitor) refreshExecutorClient() error {
 	defer nm.lock.Unlock()
 
 	if nm.executorClient == nil {
-		executor, err := executor.GetNewClient(nm.executorAddr)
-		if err != nil {
-			return err
+		executor := executor.GetNewClient(nm.executorAddr)
+		if executor != nil {
+			return fmt.Errorf("Could not instantiate executor client")
 		}
 		nm.executorClient = executor
 	}
@@ -244,15 +244,11 @@ func (nm *NodeMonitor) refreshExecutorClient() error {
 /*
 Returns the client for the scheduler rpc. Creates one if it is nil.
 */
-func (nm *NodeMonitor) getSchedulerClient(addr string) (scheduler.SchedulerClient, error) {
+func (nm *NodeMonitor) getSchedulerClient(addr string) (*scheduler.Scheduler, error) {
 
 	schedulerClient, ok := nm.schedulerClients[addr]
 	if !ok {
-		schedulerClient, err := scheduler.GetNewClient(addr)
-		if err != nil {
-			return nil, fmt.Errorf("Unable to get scheduler client")
-		}
-		nm.schedulerClients[addr] = schedulerClient
+		nm.schedulerClients[addr] = scheduler.GetNewClient(addr)
 	}
 	return schedulerClient, nil
 }
