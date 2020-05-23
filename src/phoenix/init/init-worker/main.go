@@ -1,4 +1,4 @@
-package init_worker
+package main
 
 import (
 	"flag"
