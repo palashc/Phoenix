@@ -98,7 +98,7 @@ func (nm *NodeMonitor) TaskComplete(taskID string, ret *bool) error {
 		return fmt.Errorf("[Task Complete] Unable to get a scheduler client: %q", err)
 	}
 	var succ bool
-	err = schedulerClient.NotifyTaskComplete(taskID, &succ)
+	err = schedulerClient.TaskComplete(taskID, &succ)
 	if err != nil {
 		return fmt.Errorf("[Task Complete] Unable to notify scheduler about task completion: %q", err)
 	}

@@ -117,7 +117,7 @@ func (ts *TaskScheduler) GetTask(jobId string, task *types.Task) error {
 	return nil
 }
 
-func (ts *TaskScheduler) NotifyTaskComplete(taskId string, completeResult *bool) error {
+func (ts *TaskScheduler) TaskComplete(taskId string, completeResult *bool) error {
 
 	ts.taskToJobLock.Lock()
 	jobId, found := ts.taskToJob[taskId]
@@ -230,4 +230,4 @@ func MapToList(loadMap map[int]int) (sortedResultList types.NodeLoadSeq) {
 
 //SubmitJob(job types.Job, submitResult *bool) error
 //GetTask(taskId string, task *types.Task) error
-//NotifyTaskComplete(taskId string, completeResult *bool) error
+//TaskComplete(taskId string, completeResult *bool) error

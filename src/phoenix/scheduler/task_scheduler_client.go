@@ -61,13 +61,13 @@ func (tsc *TaskSchedulerClient) GetTask(taskId string, task *types.Task) error {
 
 	return nil
 }
-func (tsc *TaskSchedulerClient) NotifyTaskComplete(taskId string, completeResult *bool) error {
+func (tsc *TaskSchedulerClient) TaskComplete(taskId string, completeResult *bool) error {
 	err := tsc.rpcConn()
 	if err != nil {
 		return err
 	}
 
-	err = tsc.conn.Call("TaskScheduler.NotifyTaskComplete", taskId, completeResult)
+	err = tsc.conn.Call("TaskScheduler.TaskComplete", taskId, completeResult)
 	if err != nil {
 		return err
 	}
