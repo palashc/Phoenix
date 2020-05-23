@@ -47,7 +47,7 @@ var _ phoenix.TaskSchedulerInterface = new(TaskScheduler)
 
 func (ts *TaskScheduler) SubmitJob(job types.Job, submitResult *bool) error {
 
-	enqueueCount := MIN(len(job.Tasks)*DefaultSampleRatio, len(ts.MonitorClientPool))
+	enqueueCount := len(job.Tasks) * DefaultSampleRatio
 	ts.jobMapLock.Lock()
 	ts.jobMap[job.Id] = job
 	ts.jobMapLock.Unlock()
