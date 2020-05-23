@@ -10,21 +10,21 @@ import (
 var DefaultConfigPath = "phoenix_config.conf"
 
 type ExecutorConfig struct {
-	Addr	string
+	Addr     string
 	Executor phoenix.ExecutorServer
-	Ready chan<- bool
-}
-
-type ExecutorConfig struct {
-	Addr	string
-	Executor phoenix.ExecutorServer
-	Ready chan<- bool
+	Ready    chan<- bool
 }
 
 type MonitorConfig struct {
 	Addr    string
 	Monitor phoenix.MonitorInterface
 	Ready   chan<- bool
+}
+
+type TaskSchedulerConfig struct {
+	Addr          string
+	TaskScheduler phoenix.TaskSchedulerInterface
+	Ready         chan<- bool
 }
 
 type PhoenixConfig struct {
@@ -40,15 +40,15 @@ func (pc *PhoenixConfig) NewMonitorConfig(i int, nm phoenix.MonitorInterface) *M
 	return ret
 }
 
-func (pc *PhoenixConfig) NewExecutorConfig(addr string, ec phoenix.ExecutorServer) *ExecutorConfig{
+func (pc *PhoenixConfig) NewExecutorConfig(addr string, ec phoenix.ExecutorServer) *ExecutorConfig {
 	return &ExecutorConfig{
-		Addr: addr,
+		Addr:     addr,
 		Executor: ec,
 	}
 }
 
-func (self *PhoenixConfig) Save(p string) error {
-	b := self.marshal()
+func (pc *PhoenixConfig) Save(p string) error {
+	b := pc.marshal()
 
 	fout, e := os.Create(p)
 	if e != nil {
@@ -68,8 +68,8 @@ func (self *PhoenixConfig) Save(p string) error {
 	return fout.Close()
 }
 
-func (self *PhoenixConfig) String() string {
-	b := self.marshal()
+func (pc *PhoenixConfig) String() string {
+	b := pc.marshal()
 	return string(b)
 }
 
@@ -89,8 +89,8 @@ func LoadConfig(p string) (*PhoenixConfig, error) {
 	return ret, nil
 }
 
-func (self *PhoenixConfig) marshal() []byte {
-	b, e := json.MarshalIndent(self, "", "    ")
+func (pc *PhoenixConfig) marshal() []byte {
+	b, e := json.MarshalIndent(pc, "", "    ")
 	if e != nil {
 		panic(e)
 	}

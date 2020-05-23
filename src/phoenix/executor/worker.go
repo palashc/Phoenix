@@ -1,25 +1,24 @@
 package executor
 
 import (
-
 	"phoenix/types"
 	"time"
 )
 
 // Worker thread
-// Main thread sends Workers Tasks through taskchan.
-// Workers send "nil" back through taskchan to mark task as complete
-func Worker(workerID int, taskchan chan *types.Task, donechan chan int ) {
+// Main thread sends Workers Tasks through taskChan.
+// Workers send "nil" back through taskChan to mark task as complete
+func Worker(workerID int, taskChan chan *types.Task, doneChan chan int) {
 
 	for {
-		newTask := <- taskchan
+		newTask := <-taskChan
 		performTask(newTask)
 
 		// mark task as complete
-		donechan <- workerID
+		doneChan <- workerID
 	}
 }
 
 func performTask(task *types.Task) {
-	time.Sleep(time.Millisecond * time.Duration(task.T * 1000))
+	time.Sleep(time.Millisecond * time.Duration(task.T*1000))
 }

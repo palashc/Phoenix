@@ -23,7 +23,7 @@ type ECState struct {
 	availWorkers []bool
 
 	// channels for communicating with workers
-	taskChans [] chan *types.Task	
+	taskChans []chan *types.Task
 
 	// buffered channel should have slotCount size
 	doneChan chan int
@@ -32,19 +32,18 @@ type ECState struct {
 	lock sync.Mutex
 
 	// nmClient
-	nmClient *phoenix.MonitorInterface 
+	nmClient *phoenix.MonitorInterface
 }
-
 
 // NewExecutor launches the executor backend
 func NewExecutor(myID int, mySlotCount int, myNmClient *phoenix.MonitorInterface) phoenix.ExecutorServer {
-	ec := &ECState {
-		id: myID,
-		slotCount: mySlotCount,
+	ec := &ECState{
+		id:           myID,
+		slotCount:    mySlotCount,
 		availWorkers: make([]bool, mySlotCount),
-		taskChans: make([]chan *types.Task, mySlotCount),
-		doneChan: make(chan int, 4),
-		nmClient: myNmClient,
+		taskChans:    make([]chan *types.Task, mySlotCount),
+		doneChan:     make(chan int, 4),
+		nmClient:     myNmClient,
 	}
 
 	// initialize worker pool
@@ -73,7 +72,7 @@ func (ec *ECState) initWorkerPool() {
 func (ec *ECState) WorkerCoordinator() {
 	for {
 		// find worker that has finished; block on doneChannel
-		wID := <- ec.doneChan
+		wID := <-ec.doneChan
 
 		ec.lock.Lock()
 		ec.availWorkers[wID] = true
@@ -87,7 +86,7 @@ func (ec *ECState) LaunchTask(task types.Task, ret *bool) error {
 
 	*ret = true
 
-	for wID := 0; wID < ec.slotCount; wID ++ {
+	for wID := 0; wID < ec.slotCount; wID++ {
 		if ec.availWorkers[wID] {
 			ec.taskChans[wID] <- &task
 			return nil

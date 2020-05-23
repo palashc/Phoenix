@@ -39,4 +39,3 @@ func ServeExecutor(b *config.ExecutorConfig) error {
 
 	return http.Serve(l, server)
 }
-
