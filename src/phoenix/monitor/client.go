@@ -50,7 +50,7 @@ func (nmc *NodeMonitorClient) Probe(_ignore int, n *int) error {
 		return err
 	}
 
-	err = nmc.conn.Call("NodeMonitor.GetNumQueuedTasks", _ignore, n)
+	err = nmc.conn.Call("NodeMonitor.Probe", _ignore, n)
 	if err != nil {
 		return err
 	}

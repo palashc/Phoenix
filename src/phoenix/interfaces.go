@@ -12,8 +12,7 @@ type MonitorInterface interface {
 type TaskSchedulerInterface interface {
 	SubmitJob(job types.Job, submitResult *bool) error
 	GetTask(taskId string, task *types.Task) error
-	NotifyTaskComplete(taskId string, completeResult *bool) error
-
+	NotifyTaskComplete(jobId string, completeResult *bool) error
 }
 
 // TODO: Might not necessary to have frontend

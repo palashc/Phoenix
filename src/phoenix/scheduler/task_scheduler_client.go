@@ -5,7 +5,6 @@ import (
 	"phoenix"
 	"phoenix/types"
 	"sync"
-
 	//"phoenix/types"
 )
 
@@ -49,8 +48,28 @@ func (tsc *TaskSchedulerClient) SubmitJob(job types.Job, submitResult *bool) err
 }
 
 func (tsc *TaskSchedulerClient) GetTask(taskId string, task *types.Task) error {
-	panic("TODO")
+	err := tsc.rpcConn()
+	if err != nil {
+		return err
+	}
+
+	err = tsc.conn.Call("TaskScheduler.GetTask", taskId, task)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 func (tsc *TaskSchedulerClient) NotifyTaskComplete(taskId string, completeResult *bool) error {
-	panic("TODO")
+	err := tsc.rpcConn()
+	if err != nil {
+		return err
+	}
+
+	err = tsc.conn.Call("TaskScheduler.NotifyTaskComplete", taskId, completeResult)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
