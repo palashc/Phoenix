@@ -4,20 +4,14 @@ import (
 	"net"
 	"net/http"
 	"net/rpc"
-	"phoenix"
 	"phoenix/config"
 )
-
-func GetNewClient(addr string) phoenix.ExecutorInterface {
-	return &ExecutorClient{addr: addr}
-}
 
 // Serve as a backend based on the given configuration
 func ServeExecutor(b *config.ExecutorConfig) error {
 
 	server := rpc.NewServer()
 
-	// TODO, change before submission
 	e := server.Register(b.Executor)
 	if e != nil {
 		if b.Ready != nil {

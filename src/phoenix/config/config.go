@@ -30,6 +30,7 @@ type TaskSchedulerConfig struct {
 type PhoenixConfig struct {
 	Schedulers []string
 	Monitors   []string
+	Executors  []string
 }
 
 func (pc *PhoenixConfig) NewMonitorConfig(i int, nm phoenix.MonitorInterface) *MonitorConfig {
@@ -40,10 +41,11 @@ func (pc *PhoenixConfig) NewMonitorConfig(i int, nm phoenix.MonitorInterface) *M
 	return ret
 }
 
-func (pc *PhoenixConfig) NewExecutorConfig(addr string, ec phoenix.ExecutorInterface) *ExecutorConfig {
+func (pc *PhoenixConfig) NewExecutorConfig(i int, ec phoenix.ExecutorInterface) *ExecutorConfig {
 	return &ExecutorConfig{
-		Addr:     addr,
+		Addr:     pc.Executors[i],
 		Executor: ec,
+		Ready: make(chan bool, 1),
 	}
 }
 

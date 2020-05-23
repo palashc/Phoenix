@@ -1,4 +1,4 @@
-package main
+package init_config
 
 import (
 	"flag"
@@ -31,6 +31,9 @@ func main() {
 	phoenixConfig.Schedulers = make([]string, *nschedulers)
 	phoenixConfig.Monitors = make([]string, *nmonitors)
 
+	// same number of executors as monitors
+	phoenixConfig.Executors = make([]string, *nmonitors)
+
 	ip_addrs := strings.Split(*ips, ",")
 	if nmachine := len(ip_addrs); nmachine > 0 {
 		for i := 0; i < *nschedulers; i++ {
@@ -42,6 +45,9 @@ func main() {
 		for i := 0; i < *nmonitors; i++ {
 			host := fmt.Sprintf("%s", ip_addrs[i%nmachine])
 			phoenixConfig.Monitors[i] = fmt.Sprintf("%s:%d", host, p)
+
+			// run Executors on same machine as monitors
+			phoenixConfig.Executors[i] = fmt.Sprintf("%s:%d", host, p+1000)
 			p++
 		}
 	}

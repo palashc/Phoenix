@@ -7,10 +7,6 @@ import (
 	"phoenix/config"
 )
 
-func GetNewClient(addr string) *NodeMonitorClient {
-	return &NodeMonitorClient{addr: addr}
-}
-
 // Serve as a backend based on the given configuration
 func ServeMonitor(b *config.MonitorConfig) error {
 

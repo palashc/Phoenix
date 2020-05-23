@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"net/rpc"
+	"phoenix"
 	"phoenix/types"
 	"sync"
 )
@@ -10,6 +11,10 @@ type NodeMonitorClient struct {
 	addr string
 	conn *rpc.Client
 	lock sync.Mutex
+}
+
+func GetNewClient(addr string) phoenix.MonitorInterface {
+	return &NodeMonitorClient{addr: addr}
 }
 
 func (nmc *NodeMonitorClient) rpcConn() error {
