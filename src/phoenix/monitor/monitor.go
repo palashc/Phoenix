@@ -31,6 +31,7 @@ func NewNodeMonitor(executor string, schedulers []string) *NodeMonitor {
 		schedulerAddrs:   schedulers,
 		cancelled:        make(map[string]bool),
 		taskSchedulerMap: make(map[string]string),
+		jobSchedulerMap:  make(map[string]string)
 		schedulerClients: make(map[string]*scheduler.TaskSchedulerClient),
 	}
 }
