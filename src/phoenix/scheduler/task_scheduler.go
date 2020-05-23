@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"phoenix"
 	"phoenix/types"
-	"sort"
 	"sync"
 )
 
@@ -40,6 +39,19 @@ type TaskScheduler struct {
 	// Pending, might have a 1-1 mapping from client to scheduler
 	// Front-ends that are able to communicate with this scheduler
 	//FrontEndClientPool map[int]
+}
+
+func NewTaskScheduler(addr string, monitorClientPool map[int]phoenix.MonitorInterface) phoenix.TaskSchedulerInterface {
+	return &TaskScheduler{
+		MonitorClientPool: monitorClientPool,
+		jobStatusLock:     sync.Mutex{},
+		jobStatus:         nil,
+		jobLeftTask:       nil,
+		jobMapLock:        sync.Mutex{},
+		jobMap:            nil,
+		taskToJobLock:     sync.Mutex{},
+		taskToJob:         nil,
+	}
 }
 
 var _ phoenix.TaskSchedulerInterface = new(TaskScheduler)
@@ -162,9 +174,9 @@ func (ts *TaskScheduler) TaskComplete(taskId string, completeResult *bool) error
 }
 
 func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
-	nodeLoads := ts.probeNodeMonitor(enqueueCount)
+	nodesToEnqueue := ts.selectEnqueueWorker(enqueueCount)
 
-	probeNodesList := MapToList(nodeLoads)
+	probeNodesList := MapToList(nodesToEnqueue)
 	targetIndex := 0
 
 	for enqueueCount > 0 {
@@ -174,7 +186,7 @@ func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
 		}
 		queuePos := 0
 
-		targetWorkerId := (*probeNodesList[targetIndex%len(probeNodesList)])[types.TARGET_INDEX]
+		targetWorkerId := probeNodesList[targetIndex%len(probeNodesList)]
 		e := ts.MonitorClientPool[targetWorkerId].EnqueueReservation(&taskR, &queuePos)
 
 		if e != nil {
@@ -190,9 +202,9 @@ func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
 	return nil
 }
 
-func (ts *TaskScheduler) probeNodeMonitor(probeCount int) map[int]int {
+func (ts *TaskScheduler) selectEnqueueWorker(probeCount int) map[int]bool {
 
-	probeNodes := make(map[int]int)
+	probeNodes := make(map[int]bool)
 
 	for probeCount > 0 {
 
@@ -202,28 +214,27 @@ func (ts *TaskScheduler) probeNodeMonitor(probeCount int) map[int]int {
 			continue
 		}
 
-		var _ignore, queueLength int
-		e := ts.MonitorClientPool[targetWorkerId].Probe(_ignore, &queueLength)
-		if e != nil {
-			continue
-		}
+		//var _ignore, queueLength int
+		//e := ts.MonitorClientPool[targetWorkerId].Probe(_ignore, &queueLength)
+		//if e != nil {
+		//	continue
+		//}
 
-		probeNodes[targetWorkerId] = queueLength
+		probeNodes[targetWorkerId] = true
 		probeCount--
 	}
 
 	return probeNodes
 }
 
-func MapToList(loadMap map[int]int) (sortedResultList types.NodeLoadSeq) {
+func MapToList(nodeMap map[int]bool) (resultList []int) {
 
-	sortedResultList = make(types.NodeLoadSeq, len(loadMap))
+	resultList = make([]int, len(nodeMap))
 
-	for nodeId, nodeQueueLen := range loadMap {
-		sortedResultList = append(sortedResultList, &(types.NodeLoad{nodeId, nodeQueueLen}))
+	for nodeId, _ := range nodeMap {
+		resultList = append(resultList, nodeId)
 	}
 
-	sort.Sort(sortedResultList)
 	return
 }
 
