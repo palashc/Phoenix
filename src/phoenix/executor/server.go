@@ -4,10 +4,11 @@ import (
 	"net"
 	"net/http"
 	"net/rpc"
+	"phoenix"
 	"phoenix/config"
 )
 
-func GetNewClient(addr string) *ExecutorClient {
+func GetNewClient(addr string) phoenix.ExecutorInterface {
 	return &ExecutorClient{addr: addr}
 }
 

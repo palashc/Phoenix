@@ -15,10 +15,11 @@ type NodeMonitor struct {
 	lock             sync.Mutex
 	executorAddr     string
 	schedulerAddrs   []string
-	executorClient   *executor.ExecutorClient
-	schedulerClients map[string]*scheduler.TaskSchedulerClient
+	executorClient   phoenix.ExecutorInterface
+	schedulerClients map[string]phoenix.TaskSchedulerInterface
 	cancelled        map[string]bool
 	taskSchedulerMap map[string]string
+	jobSchedulerMap  map[string]string
 }
 
 const NUM_SLOTS = 4
@@ -30,7 +31,9 @@ func NewNodeMonitor(executor string, schedulers []string) *NodeMonitor {
 		schedulerAddrs:   schedulers,
 		cancelled:        make(map[string]bool),
 		taskSchedulerMap: make(map[string]string),
-		schedulerClients: make(map[string]*scheduler.TaskSchedulerClient),
+		jobSchedulerMap:  make(map[string]string),
+		schedulerClients: make(map[string]phoenix.TaskSchedulerInterface),
+		executorClient:   nil,
 	}
 }
 
@@ -57,7 +60,7 @@ func (nm *NodeMonitor) EnqueueReservation(taskReservation *types.TaskReservation
 		*position = nm.queue.Len()
 	}
 
-	nm.taskSchedulerMap[taskReservation.TaskID] = taskReservation.SchedulerAddr
+	nm.taskSchedulerMap[taskReservation.JobID] = taskReservation.SchedulerAddr
 	return nil
 }
 
@@ -119,12 +122,12 @@ func (nm *NodeMonitor) TaskComplete(taskID string, ret *bool) error {
 Adds the requestID of the proactively cancelled task to a map.
 This map is consulted before any task is launched.
 */
-func (nm *NodeMonitor) CancelTaskReservation(taskID string, ret *bool) error {
+func (nm *NodeMonitor) CancelTaskReservation(jobID string, ret *bool) error {
 
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
 
-	nm.cancelled[taskID] = true
+	nm.cancelled[jobID] = true
 	*ret = true
 	return nil
 }
@@ -141,12 +144,12 @@ func (nm *NodeMonitor) getTask(taskReservation *types.TaskReservation) (*types.T
 	if err != nil {
 		return nil, fmt.Errorf("[getTask] Unable to get a scheduler client: %q", err)
 	}
-	taskID := taskReservation.TaskID
+	jobID := taskReservation.JobID
 
 	var task types.Task
-	err = schedulerClient.GetTask(taskID, &task)
+	err = schedulerClient.GetTask(jobID, &task)
 	if err != nil {
-		return nil, fmt.Errorf("[getTask] Unable to get task %v from scheduler %v : %q", taskID, schedulerAddr, err)
+		return nil, fmt.Errorf("[getTask] Unable to get task %v from scheduler %v : %q", jobID, schedulerAddr, err)
 	}
 
 	return &task, nil
@@ -186,7 +189,7 @@ func (nm *NodeMonitor) attemptLaunchTask() {
 
 		//check if taskR has a reservation for a task which was not cancelled
 		if taskR, ok := _taskR.(types.TaskReservation); ok {
-			_, cancelled := nm.cancelled[taskR.TaskID]
+			_, cancelled := nm.cancelled[taskR.JobID]
 			if !cancelled {
 				break
 			}
@@ -211,12 +214,14 @@ func (nm *NodeMonitor) getAndLaunchTask(taskReservation *types.TaskReservation) 
 
 	task, err := nm.getTask(taskReservation)
 	if err != nil {
-		return fmt.Errorf("[NM] Unable to get task %v from scheduler: %q", taskReservation.TaskID, err)
+		return fmt.Errorf("[NM] Unable to get task %v from scheduler: %q", taskReservation.JobID, err)
 	}
+
+	nm.taskSchedulerMap[task.Id] = taskReservation.SchedulerAddr
 
 	err = nm.launchTask(task)
 	if err != nil {
-		return fmt.Errorf("[NM] Unable to launch task %v on executor: %q", taskReservation.TaskID, err)
+		return fmt.Errorf("[NM] Unable to launch task %v on executor: %q", taskReservation.JobID, err)
 	}
 
 	return nil
@@ -244,7 +249,7 @@ func (nm *NodeMonitor) refreshExecutorClient() error {
 /*
 Returns the client for the scheduler rpc. Creates one if it is nil.
 */
-func (nm *NodeMonitor) getSchedulerClient(addr string) (*scheduler.TaskSchedulerClient, error) {
+func (nm *NodeMonitor) getSchedulerClient(addr string) (phoenix.TaskSchedulerInterface, error) {
 
 	schedulerClient, ok := nm.schedulerClients[addr]
 	if !ok {

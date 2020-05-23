@@ -5,7 +5,7 @@ import (
 )
 
 // ExecutorServer interface that all executors must implement
-type ExecutorServer interface {
+type ExecutorInterface interface {
 
 	// Run a specified task
 	// net/rpc package mandates 2 parameter RPC calls
@@ -16,7 +16,7 @@ type MonitorInterface interface {
 	EnqueueReservation(taskReservation *types.TaskReservation, position *int) error
 	Probe(_ignore int, n *int) error
 	TaskComplete(taskID string, ret *bool) error
-	CancelTaskReservation(taskID string, ret *bool) error
+	CancelTaskReservation(jobID string, ret *bool) error
 }
 
 type TaskSchedulerInterface interface {

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"phoenix"
-	"phoenix/monitor"
 	"phoenix/types"
 	"sort"
 	"sync"
@@ -23,7 +22,7 @@ type TaskScheduler struct {
 	Addr string
 
 	// Monitors that we are able to contact
-	MonitorClientPool map[int]*monitor.NodeMonitorClient
+	MonitorClientPool map[int]phoenix.MonitorInterface
 
 	// From JobId -> task id -> allocated node monitor
 	//taskAllocationLock sync.Mutex
@@ -170,7 +169,7 @@ func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
 
 	for enqueueCount > 0 {
 		taskR := types.TaskReservation{
-			TaskID:        jobId,
+			JobID:         jobId,
 			SchedulerAddr: ts.Addr,
 		}
 		queuePos := 0
