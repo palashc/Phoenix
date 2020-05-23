@@ -73,7 +73,7 @@ func (nmc *NodeMonitorClient) TaskComplete(taskID string, ret *bool) error {
 	return nil
 }
 
-func (nmc *NodeMonitorClient) CancelTaskReservation(taskID string, ret *bool) error {
+func (nmc *NodeMonitorClient) CancelTaskReservation(jobID string, ret *bool) error {
 
 	err := nmc.rpcConn()
 	if err != nil {

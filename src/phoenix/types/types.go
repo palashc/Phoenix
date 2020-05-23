@@ -23,6 +23,6 @@ type Job struct {
 
 // Task Reservation for late-binding
 type TaskReservation struct {
-	TaskID        string
+	JobID         string
 	SchedulerAddr string
 }
