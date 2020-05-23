@@ -15,8 +15,8 @@ type NodeMonitor struct {
 	lock             sync.Mutex
 	executorAddr     string
 	schedulerAddrs   []string
-	executorClient   phoenix.ExecutorServer
-	schedulerClients map[string] phoenix.SchedulerServer
+	executorClient   *executor.ExecutorClient
+	schedulerClients map[string] *scheduler.SchedulerClient
 	cancelled        map[string]bool
 	taskSchedulerMap map[string]string
 }
@@ -30,7 +30,7 @@ func NewNodeMonitor(executor string, schedulers []string) *NodeMonitor {
 		schedulerAddrs:   schedulers,
 		cancelled:        make(map[string]bool),
 		taskSchedulerMap: make(map[string]string),
-		schedulerClients: make(map[string]phoenix.SchedulerServer),
+		schedulerClients: make(map[string]*scheduler.SchedulerClient),
 	}
 }
 
@@ -244,7 +244,7 @@ func (nm *NodeMonitor) refreshExecutorClient() error {
 /*
 Returns the client for the scheduler rpc. Creates one if it is nil.
 */
-func (nm *NodeMonitor) getSchedulerClient(addr string) (phoenix.SchedulerServer, error) {
+func (nm *NodeMonitor) getSchedulerClient(addr string) (*scheduler.Scheduler, error) {
 
 	schedulerClient, ok := nm.schedulerClients[addr]
 	if !ok {
