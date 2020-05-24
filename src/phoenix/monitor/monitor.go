@@ -139,14 +139,14 @@ func (nm *NodeMonitor) getTask(taskReservation types.TaskReservation) (types.Tas
 	schedulerAddr := taskReservation.SchedulerAddr
 	schedulerClient, err := nm.getSchedulerClient(schedulerAddr)
 	if err != nil {
-		return nil, fmt.Errorf("[getTask] Unable to get a scheduler client: %q", err)
+		return types.Task{}, fmt.Errorf("[getTask] Unable to get a scheduler client: %q", err)
 	}
 	jobID := taskReservation.JobID
 
 	var task types.Task
 	err = schedulerClient.GetTask(jobID, &task)
 	if err != nil {
-		return nil, fmt.Errorf("[getTask] Unable to get task %v from scheduler %v : %q", jobID, schedulerAddr, err)
+		return types.Task{}, fmt.Errorf("[getTask] Unable to get task %v from scheduler %v : %q", jobID, schedulerAddr, err)
 	}
 
 	return task, nil
@@ -192,7 +192,7 @@ func (nm *NodeMonitor) attemptLaunchTask() {
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
 
-	err := nm.getAndLaunchTask(&taskR)
+	err := nm.getAndLaunchTask(taskR)
 	if err != nil {
 		panic("Unable to launch next task")
 	}

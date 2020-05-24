@@ -13,7 +13,7 @@ type ExecutorInterface interface {
 }
 
 type MonitorInterface interface {
-	EnqueueReservation(taskReservation *types.TaskReservation, position *int) error
+	EnqueueReservation(taskReservation types.TaskReservation, position *int) error
 	Probe(_ignore int, n *int) error
 	TaskComplete(taskID string, ret *bool) error
 	CancelTaskReservation(jobID string, ret *bool) error
