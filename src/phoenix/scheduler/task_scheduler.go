@@ -188,7 +188,7 @@ func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
 		queuePos := 0
 
 		targetWorkerId := probeNodesList[targetIndex%len(probeNodesList)]
-		e := ts.MonitorClientPool[targetWorkerId].EnqueueReservation(&taskR, &queuePos)
+		e := ts.MonitorClientPool[targetWorkerId].EnqueueReservation(taskR, &queuePos)
 
 		if e != nil {
 			// Remove the inactive back
