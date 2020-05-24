@@ -212,9 +212,11 @@ func (nm *NodeMonitor) getAndLaunchTask(taskReservation types.TaskReservation) e
 
 	nm.taskSchedulerMap[task.Id] = taskReservation.SchedulerAddr
 
-	err = nm.launchTask(task)
-	if err != nil {
-		return fmt.Errorf("[NM] Unable to launch task %v on executor: %q", taskReservation.JobID, err)
+	if task.T > 0 {
+		err = nm.launchTask(task)
+		if err != nil {
+			return fmt.Errorf("[NM] Unable to launch task %v on executor: %q", taskReservation.JobID, err)
+		}
 	}
 
 	return nil
