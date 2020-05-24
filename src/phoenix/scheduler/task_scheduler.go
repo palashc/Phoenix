@@ -59,7 +59,7 @@ var _ phoenix.TaskSchedulerInterface = new(TaskScheduler)
 
 func (ts *TaskScheduler) SubmitJob(job types.Job, submitResult *bool) error {
 	fmt.Println("Scheduler backend got job", job.Id)
-	enqueueCount := MIN(len(ts.MonitorClientPool), len(job.Tasks)*DefaultSampleRatio)
+	enqueueCount := len(job.Tasks) * DefaultSampleRatio
 	fmt.Println("Enqueue count ", enqueueCount)
 	ts.jobMapLock.Lock()
 	ts.jobMap[job.Id] = job
@@ -214,9 +214,9 @@ func (ts *TaskScheduler) selectEnqueueWorker(probeCount int) map[int]bool {
 
 		targetWorkerId := rand.Int() % len(ts.MonitorClientPool)
 
-		if _, found := probeNodes[targetWorkerId]; found {
-			continue
-		}
+		// if _, found := probeNodes[targetWorkerId]; found {
+		// 	continue
+		// }
 
 		//var _ignore, queueLength int
 		//e := ts.MonitorClientPool[targetWorkerId].Probe(_ignore, &queueLength)

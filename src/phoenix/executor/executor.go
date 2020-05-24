@@ -81,7 +81,7 @@ func (ec *ECState) WorkerCoordinator() {
 		ec.availWorkers[finishedTask.workerID] = true
 		ec.lock.Unlock()
 
-		go func (id string) {
+		go func(id string) {
 			var succ bool
 			if err := ec.nmClient.TaskComplete(id, &succ); err != nil {
 				fmt.Errorf("[Executor: WorkerCoordinator]: Failed to invoke TaskComplete on TaskID: %s", id)
@@ -101,6 +101,7 @@ func (ec *ECState) LaunchTask(task types.Task, ret *bool) error {
 	*ret = true
 
 	for wID := 0; wID < ec.slotCount; wID++ {
+		fmt.Println("launchingggg")
 		if ec.availWorkers[wID] {
 			ec.taskChans[wID] <- &task
 			return nil

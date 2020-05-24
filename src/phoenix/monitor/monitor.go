@@ -136,19 +136,14 @@ Gets the task information from the scheduler for a reservation.
 */
 func (nm *NodeMonitor) getTask(taskReservation types.TaskReservation) (types.Task, error) {
 	fmt.Printf("[Node Monitor] getting task for job: %v\n", taskReservation.JobID)
-	fmt.Println("got TR ", taskReservation)
 	schedulerAddr := taskReservation.SchedulerAddr
-	fmt.Println("got scheduler addr ", schedulerAddr)
 	schedulerClient, ok := nm.schedulerClients[schedulerAddr]
-	fmt.Println("got scheduler client ", schedulerClient)
+
 	if !ok {
 		return types.Task{}, fmt.Errorf("[getTask] Unable to get a scheduler client")
 	}
-	fmt.Println("here")
 	jobID := taskReservation.JobID
-	fmt.Println("here")
 	var task types.Task
-	fmt.Println("here")
 	err := schedulerClient.GetTask(jobID, &task)
 	fmt.Println(task)
 	if err != nil {
@@ -218,9 +213,11 @@ func (nm *NodeMonitor) getAndLaunchTask(taskReservation types.TaskReservation) e
 
 	nm.taskSchedulerMap[task.Id] = taskReservation.SchedulerAddr
 
-	err = nm.launchTask(task)
-	if err != nil {
-		return fmt.Errorf("[NM] Unable to launch task %v on executor: %q", taskReservation.JobID, err)
+	if task.T > 0 {
+		err = nm.launchTask(task)
+		if err != nil {
+			return fmt.Errorf("[NM] Unable to launch task %v on executor: %q", taskReservation.JobID, err)
+		}
 	}
 
 	return nil
