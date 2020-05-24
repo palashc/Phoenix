@@ -52,7 +52,7 @@ func main() {
 		log.Printf("monitor serving on %s", mConfig.Addr)
 		log.Printf("executor serving on %s", eConfig.Addr)
 
-		noError(monitor.ServeMonitor(mConfig))
+		go noError(monitor.ServeMonitor(mConfig))
 		noError(executor.ServeExecutor(eConfig))
 	}
 
