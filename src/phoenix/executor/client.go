@@ -17,30 +17,32 @@ func GetNewClient(addr string) *ExecutorClient {
 	return &ExecutorClient{addr: addr}
 }
 
-func (ec *ExecutorClient) LaunchTask(task types.Task, ret *bool) error {
+func (ec *ExecutorClient) rpcConn() error {
+	ec.lock.Lock()
+	defer ec.lock.Unlock()
 
-	var err error
 	if ec.conn != nil {
-		ec.lock.Lock()
-		ec.conn, err = rpc.DialHTTP("tcp", ec.addr)
-		ec.lock.Unlock()
-
-		if err != nil {
-			return err
-		}
+		return nil
 	}
 
-	if err = ec.conn.Call("Executor.launchTask", task, ret); err != nil {
+	var err error
+	ec.conn, err = rpc.DialHTTP("tcp", ec.addr)
+	if err != nil {
+		ec.conn = nil
+	}
+	return err
+}
 
-		ec.lock.Lock()
-		ec.conn, err = rpc.DialHTTP("tcp", ec.addr)
-		ec.lock.Unlock()
+func (ec *ExecutorClient) LaunchTask(task types.Task, ret *bool) error {
 
-		if ec.conn, err = rpc.DialHTTP("tcp", ec.addr); err != nil {
-			return err
-		}
+	err := ec.rpcConn()
+	if err != nil {
+		return err
+	}
 
-		return ec.conn.Call("Executor.launchTask", task, ret)
+	err = ec.conn.Call("Executor.LaunchTask", task, ret)
+	if err != nil {
+		return err
 	}
 
 	return nil

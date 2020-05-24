@@ -32,7 +32,7 @@ func (nmc *NodeMonitorClient) rpcConn() error {
 	return err
 }
 
-func (nmc *NodeMonitorClient) EnqueueReservation(taskR *types.TaskReservation, pos *int) error {
+func (nmc *NodeMonitorClient) EnqueueReservation(taskR types.TaskReservation, pos *int) error {
 
 	err := nmc.rpcConn()
 	if err != nil {

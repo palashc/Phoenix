@@ -45,12 +45,13 @@ func NewTaskScheduler(addr string, monitorClientPool map[int]phoenix.MonitorInte
 	return &TaskScheduler{
 		MonitorClientPool: monitorClientPool,
 		jobStatusLock:     sync.Mutex{},
-		jobStatus:         nil,
-		jobLeftTask:       nil,
+		jobStatus:         make(map[string]map[string]*types.TaskRecord),
+		jobLeftTask:       make(map[string]int),
 		jobMapLock:        sync.Mutex{},
-		jobMap:            nil,
+		jobMap:            make(map[string]types.Job),
 		taskToJobLock:     sync.Mutex{},
-		taskToJob:         nil,
+		taskToJob:         make(map[string]string),
+		Addr:              addr,
 	}
 }
 
@@ -187,7 +188,7 @@ func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
 		queuePos := 0
 
 		targetWorkerId := probeNodesList[targetIndex%len(probeNodesList)]
-		e := ts.MonitorClientPool[targetWorkerId].EnqueueReservation(&taskR, &queuePos)
+		e := ts.MonitorClientPool[targetWorkerId].EnqueueReservation(taskR, &queuePos)
 
 		if e != nil {
 			// Remove the inactive back
@@ -210,9 +211,9 @@ func (ts *TaskScheduler) selectEnqueueWorker(probeCount int) map[int]bool {
 
 		targetWorkerId := rand.Int() % len(ts.MonitorClientPool)
 
-		if _, found := probeNodes[targetWorkerId]; found {
-			continue
-		}
+// 		if _, found := probeNodes[targetWorkerId]; found {
+// 			continue
+// 		}
 
 		//var _ignore, queueLength int
 		//e := ts.MonitorClientPool[targetWorkerId].Probe(_ignore, &queueLength)
@@ -229,7 +230,7 @@ func (ts *TaskScheduler) selectEnqueueWorker(probeCount int) map[int]bool {
 
 func MapToList(nodeMap map[int]bool) (resultList []int) {
 
-	resultList = make([]int, len(nodeMap))
+	resultList = []int{}
 
 	for nodeId, _ := range nodeMap {
 		resultList = append(resultList, nodeId)
