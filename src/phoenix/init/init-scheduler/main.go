@@ -6,7 +6,6 @@ import (
 	"log"
 	"phoenix"
 	"phoenix/config"
-	//"phoenix/executor"
 	"phoenix/monitor"
 	"phoenix/scheduler"
 )

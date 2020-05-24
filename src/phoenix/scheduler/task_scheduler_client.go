@@ -1,11 +1,11 @@
 package scheduler
 
 import (
+	"fmt"
 	"net/rpc"
 	"phoenix"
 	"phoenix/types"
 	"sync"
-	//"phoenix/types"
 )
 
 type TaskSchedulerClient struct {
@@ -33,7 +33,7 @@ func (tsc *TaskSchedulerClient) rpcConn() error {
 var _ phoenix.TaskSchedulerInterface = new(TaskSchedulerClient)
 
 func (tsc *TaskSchedulerClient) SubmitJob(job types.Job, submitResult *bool) error {
-
+	fmt.Println("SubmitJob() %v", job.Id)
 	err := tsc.rpcConn()
 	if err != nil {
 		return err

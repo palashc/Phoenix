@@ -5,9 +5,9 @@ package types
 type TaskID string
 
 type Task struct {
-	JobId 	string
-	Id  	string
-	T     	float32
+	JobId string
+	Id    string
+	T     float32
 }
 
 type TaskRecord struct {

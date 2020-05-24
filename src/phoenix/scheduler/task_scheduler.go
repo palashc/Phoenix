@@ -45,20 +45,22 @@ func NewTaskScheduler(addr string, monitorClientPool map[int]phoenix.MonitorInte
 	return &TaskScheduler{
 		MonitorClientPool: monitorClientPool,
 		jobStatusLock:     sync.Mutex{},
-		jobStatus:         nil,
-		jobLeftTask:       nil,
+		jobStatus:         make(map[string]map[string]*types.TaskRecord),
+		jobLeftTask:       make(map[string]int),
 		jobMapLock:        sync.Mutex{},
-		jobMap:            nil,
+		jobMap:            make(map[string]types.Job),
 		taskToJobLock:     sync.Mutex{},
-		taskToJob:         nil,
+		taskToJob:         make(map[string]string),
+		Addr:              addr,
 	}
 }
 
 var _ phoenix.TaskSchedulerInterface = new(TaskScheduler)
 
 func (ts *TaskScheduler) SubmitJob(job types.Job, submitResult *bool) error {
-
-	enqueueCount := len(job.Tasks) * DefaultSampleRatio
+	fmt.Println("Scheduler backend got job", job.Id)
+	enqueueCount := MIN(len(ts.MonitorClientPool), len(job.Tasks)*DefaultSampleRatio)
+	fmt.Println("Enqueue count ", enqueueCount)
 	ts.jobMapLock.Lock()
 	ts.jobMap[job.Id] = job
 	ts.jobMapLock.Unlock()
@@ -95,7 +97,7 @@ func (ts *TaskScheduler) SubmitJob(job types.Job, submitResult *bool) error {
 }
 
 func (ts *TaskScheduler) GetTask(jobId string, task *types.Task) error {
-
+	fmt.Println("GetTask ", jobId)
 	ts.jobMapLock.Lock()
 	targetJob := ts.jobMap[jobId]
 	ts.jobMapLock.Unlock()
@@ -108,8 +110,9 @@ func (ts *TaskScheduler) GetTask(jobId string, task *types.Task) error {
 		if taskRecord.AssignedWorker != -1 || taskRecord.Finished {
 			continue
 		}
-
+		fmt.Println(pendingTask)
 		*task = pendingTask
+		fmt.Println("sending Task ", pendingTask.Id)
 		//TODO: Need to update in the future or change it to Assigned boolean value
 		taskRecord.AssignedWorker = 0
 		break
@@ -175,8 +178,9 @@ func (ts *TaskScheduler) TaskComplete(taskId string, completeResult *bool) error
 
 func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
 	nodesToEnqueue := ts.selectEnqueueWorker(enqueueCount)
-
+	fmt.Println(nodesToEnqueue)
 	probeNodesList := MapToList(nodesToEnqueue)
+	fmt.Println(probeNodesList)
 	targetIndex := 0
 
 	for enqueueCount > 0 {
@@ -185,15 +189,15 @@ func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
 			SchedulerAddr: ts.Addr,
 		}
 		queuePos := 0
-
+		fmt.Println("enqueJob ", len(probeNodesList))
 		targetWorkerId := probeNodesList[targetIndex%len(probeNodesList)]
-		e := ts.MonitorClientPool[targetWorkerId].EnqueueReservation(&taskR, &queuePos)
-
-		if e != nil {
-			// Remove the inactive back
-			probeNodesList = append(probeNodesList[:targetIndex], probeNodesList[targetIndex+1:]...)
-			continue
-		}
+		_ = ts.MonitorClientPool[targetWorkerId].EnqueueReservation(taskR, &queuePos)
+		fmt.Println("[Sched] ER")
+		// if e != nil {
+		// 	// Remove the inactive back
+		// 	probeNodesList = append(probeNodesList[:targetIndex], probeNodesList[targetIndex+1:]...)
+		// 	continue
+		// }
 
 		enqueueCount--
 		targetIndex++
@@ -229,7 +233,7 @@ func (ts *TaskScheduler) selectEnqueueWorker(probeCount int) map[int]bool {
 
 func MapToList(nodeMap map[int]bool) (resultList []int) {
 
-	resultList = make([]int, len(nodeMap))
+	resultList = []int{}
 
 	for nodeId, _ := range nodeMap {
 		resultList = append(resultList, nodeId)

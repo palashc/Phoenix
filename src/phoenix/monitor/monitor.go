@@ -23,7 +23,7 @@ type NodeMonitor struct {
 
 const NUM_SLOTS = 4
 
-func NewNodeMonitor(executorClient phoenix.ExecutorInterface, schedulers map[string] phoenix.TaskSchedulerInterface) *NodeMonitor {
+func NewNodeMonitor(executorClient phoenix.ExecutorInterface, schedulers map[string]phoenix.TaskSchedulerInterface) *NodeMonitor {
 
 	return &NodeMonitor{
 		cancelled:        make(map[string]bool),
@@ -41,8 +41,8 @@ Handles an incoming task reservation from the scheduler.
 Gets and launches the task if there is a slot available.
 Otherwise, adds the reservation to the queue.
 */
-func (nm *NodeMonitor) EnqueueReservation(taskReservation *types.TaskReservation, position *int) error {
-
+func (nm *NodeMonitor) EnqueueReservation(taskReservation types.TaskReservation, position *int) error {
+	fmt.Printf("[Node Monitor] EnqueueReservation() for jobID: %v", taskReservation.JobID)
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
 
@@ -80,7 +80,7 @@ On a taskComplete() rpc from the executor, calla taskComplete on the scheduler.
 Also, attempt to run the next task from the queue.
 */
 func (nm *NodeMonitor) TaskComplete(taskID string, ret *bool) error {
-
+	fmt.Printf("[Node Monitor] TaskComplete() for taskID: %v", taskID)
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
 
@@ -134,31 +134,37 @@ func (nm *NodeMonitor) CancelTaskReservation(jobID string, ret *bool) error {
 /*
 Gets the task information from the scheduler for a reservation.
 */
-func (nm *NodeMonitor) getTask(taskReservation *types.TaskReservation) (*types.Task, error) {
-
+func (nm *NodeMonitor) getTask(taskReservation types.TaskReservation) (types.Task, error) {
+	fmt.Printf("[Node Monitor] getting task for job: %v\n", taskReservation.JobID)
+	fmt.Println("got TR ", taskReservation)
 	schedulerAddr := taskReservation.SchedulerAddr
-	schedulerClient, err := nm.getSchedulerClient(schedulerAddr)
-	if err != nil {
-		return nil, fmt.Errorf("[getTask] Unable to get a scheduler client: %q", err)
+	fmt.Println("got scheduler addr ", schedulerAddr)
+	schedulerClient, ok := nm.schedulerClients[schedulerAddr]
+	fmt.Println("got scheduler client ", schedulerClient)
+	if !ok {
+		return types.Task{}, fmt.Errorf("[getTask] Unable to get a scheduler client")
 	}
+	fmt.Println("here")
 	jobID := taskReservation.JobID
-
+	fmt.Println("here")
 	var task types.Task
-	err = schedulerClient.GetTask(jobID, &task)
+	fmt.Println("here")
+	err := schedulerClient.GetTask(jobID, &task)
+	fmt.Println(task)
 	if err != nil {
-		return nil, fmt.Errorf("[getTask] Unable to get task %v from scheduler %v : %q", jobID, schedulerAddr, err)
+		return types.Task{}, fmt.Errorf("[getTask] Unable to get task %v from scheduler %v : %q", jobID, schedulerAddr, err)
 	}
-
-	return &task, nil
+	fmt.Printf("Got Task %v", task.Id)
+	return task, nil
 }
 
 /*
 Launch a task on the application executor.
 */
-func (nm *NodeMonitor) launchTask(task *types.Task) error {
-
+func (nm *NodeMonitor) launchTask(task types.Task) error {
+	fmt.Println("[Node Monitor] launchTask() for task: ", task.Id)
 	var ret bool
-	err := nm.executorClient.LaunchTask(*task, &ret)
+	err := nm.executorClient.LaunchTask(task, &ret)
 	if err != nil {
 		return err
 	}
@@ -192,7 +198,7 @@ func (nm *NodeMonitor) attemptLaunchTask() {
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
 
-	err := nm.getAndLaunchTask(&taskR)
+	err := nm.getAndLaunchTask(taskR)
 	if err != nil {
 		panic("Unable to launch next task")
 	}
@@ -203,7 +209,7 @@ func (nm *NodeMonitor) attemptLaunchTask() {
 /*
 Helper method to get a task and launch it
 */
-func (nm *NodeMonitor) getAndLaunchTask(taskReservation *types.TaskReservation) error {
+func (nm *NodeMonitor) getAndLaunchTask(taskReservation types.TaskReservation) error {
 
 	task, err := nm.getTask(taskReservation)
 	if err != nil {
