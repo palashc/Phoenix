@@ -230,7 +230,7 @@ func (ts *TaskScheduler) selectEnqueueWorker(probeCount int) map[int]bool {
 
 func MapToList(nodeMap map[int]bool) (resultList []int) {
 
-	resultList = make([]int, len(nodeMap))
+	resultList = []int{}
 
 	for nodeId, _ := range nodeMap {
 		resultList = append(resultList, nodeId)
