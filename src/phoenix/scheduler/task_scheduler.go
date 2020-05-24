@@ -211,9 +211,9 @@ func (ts *TaskScheduler) selectEnqueueWorker(probeCount int) map[int]bool {
 
 		targetWorkerId := rand.Int() % len(ts.MonitorClientPool)
 
-		if _, found := probeNodes[targetWorkerId]; found {
-			continue
-		}
+// 		if _, found := probeNodes[targetWorkerId]; found {
+// 			continue
+// 		}
 
 		//var _ignore, queueLength int
 		//e := ts.MonitorClientPool[targetWorkerId].Probe(_ignore, &queueLength)
