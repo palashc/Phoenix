@@ -158,15 +158,19 @@ Launch a task on the application executor.
 */
 func (nm *NodeMonitor) launchTask(task types.Task) error {
 	fmt.Println("[Node Monitor] launchTask() for task: ", task.Id)
+	fmt.Println("here")
 	var ret bool
+	fmt.Println(nm.executorClient)
 	err := nm.executorClient.LaunchTask(task, &ret)
+	fmt.Println(err)
 	if err != nil {
 		return err
 	}
+	fmt.Println("here")
 	if !ret {
 		return fmt.Errorf("[LaunchTask] Unable to launch task, executor returned false")
 	}
-
+	fmt.Println("here")
 	return nil
 }
 
@@ -210,10 +214,11 @@ func (nm *NodeMonitor) getAndLaunchTask(taskReservation types.TaskReservation) e
 	if err != nil {
 		return fmt.Errorf("[NM] Unable to get task %v from scheduler: %q", taskReservation.JobID, err)
 	}
-
+	fmt.Println("got task ", task)
 	nm.taskSchedulerMap[task.Id] = taskReservation.SchedulerAddr
 
 	if task.T > 0 {
+		fmt.Println("launching  ", task)
 		err = nm.launchTask(task)
 		if err != nil {
 			return fmt.Errorf("[NM] Unable to launch task %v on executor: %q", taskReservation.JobID, err)

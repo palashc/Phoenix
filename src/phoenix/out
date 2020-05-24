@@ -1,0 +1,633 @@
+[Node Monitor] EnqueueReservation() for jobID: job3[Node Monitor] getting task for job: job3
+[Node Monitor] EnqueueReservation() for jobID: job2[Node Monitor] getting task for job: job2
+[Node Monitor] EnqueueReservation() for jobID: job7[Node Monitor] EnqueueReservation() for jobID: job0[Node Monitor] EnqueueReservation() for jobID: job9[Node Monitor] EnqueueReservation() for jobID: job6[Node Monitor] EnqueueReservation() for jobID: job8[Node Monitor] EnqueueReservation() for jobID: job1[Node Monitor] EnqueueReservation() for jobID: job4[Node Monitor] EnqueueReservation() for jobID: job5taskkk  &{job3 job3-task0 0.17326623}
+{job3 job3-task0 0.17326623}
+Got Task job3-task0taskkk  &{job2 job2-task0 0.5238203}
+{job2 job2-task0 0.5238203}
+Got Task job2-task0got task  {job2 job2-task0 0.5238203}
+launching   {job2 job2-task0 0.5238203}
+[Node Monitor] launchTask() for task:  job2-task0
+got task  {job3 job3-task0 0.17326623}
+launching   {job3 job3-task0 0.17326623}
+[Node Monitor] launchTask() for task:  job3-task0
+[Node Monitor] getting task for job: job7
+[Node Monitor] getting task for job: job0
+taskkk  &{job7 job7-task0 0.09083728}
+taskkk  &{job0 job0-task0 0.9328464}
+{job0 job0-task0 0.9328464}
+Got Task job0-task0{job7 job7-task0 0.09083728}
+Got Task job7-task0got task  {job0 job0-task0 0.9328464}
+launching   {job0 job0-task0 0.9328464}
+[Node Monitor] launchTask() for task:  job0-task0
+got task  {job7 job7-task0 0.09083728}
+[Node Monitor] EnqueueReservation() for jobID: job2launching   {job7 job7-task0 0.09083728}
+[Node Monitor] launchTask() for task:  job7-task0
+[Node Monitor] EnqueueReservation() for jobID: job3[Node Monitor] getting task for job: job9
+[Node Monitor] getting task for job: job4
+[Node Monitor] EnqueueReservation() for jobID: job0taskkk  &{job4 job4-task0 0.30091187}
+{job4 job4-task0 0.30091187}
+Got Task job4-task0got task  {job4 job4-task0 0.30091187}
+launching   {job4 job4-task0 0.30091187}
+[Node Monitor] launchTask() for task:  job4-task0
+taskkk  &{job9 job9-task0 0.6046603}
+{job9 job9-task0 0.6046603}
+Got Task job9-task0got task  {job9 job9-task0 0.6046603}
+launching   {job9 job9-task0 0.6046603}
+[Node Monitor] launchTask() for task:  job9-task0
+[Node Monitor] EnqueueReservation() for jobID: job7[Node Monitor] getting task for job: job5
+[Node Monitor] getting task for job: job6
+[Node Monitor] EnqueueReservation() for jobID: job4taskkk  &{job6 job6-task0 0.20318687}
+{job6 job6-task0 0.20318687}
+Got Task job6-task0taskkk  &{job5 job5-task0 0.8805431}
+{job5 job5-task0 0.8805431}
+Got Task job5-task0got task  {job5 job5-task0 0.8805431}
+launching   {job5 job5-task0 0.8805431}
+[Node Monitor] launchTask() for task:  job5-task0
+[Node Monitor] EnqueueReservation() for jobID: job9got task  {job6 job6-task0 0.20318687}
+launching   {job6 job6-task0 0.20318687}
+[Node Monitor] launchTask() for task:  job6-task0
+[Node Monitor] getting task for job: job8
+[Node Monitor] getting task for job: job3
+[Node Monitor] EnqueueReservation() for jobID: job6[Node Monitor] EnqueueReservation() for jobID: job5taskkk  &{job3 job3-task1 0.54109985}
+{job3 job3-task1 0.54109985}
+Got Task job3-task1got task  {job3 job3-task1 0.54109985}
+launching   {job3 job3-task1 0.54109985}
+[Node Monitor] launchTask() for task:  job3-task1
+taskkk  &{job8 job8-task0 0.6227283}
+{job8 job8-task0 0.6227283}
+Got Task job8-task0got task  {job8 job8-task0 0.6227283}
+launching   {job8 job8-task0 0.6227283}
+[Node Monitor] launchTask() for task:  job8-task0
+[Node Monitor] getting task for job: job1
+[Node Monitor] getting task for job: job0
+[Node Monitor] EnqueueReservation() for jobID: job8[Node Monitor] EnqueueReservation() for jobID: job3taskkk  &{job0 job0-task1 0.74184895}
+{job0 job0-task1 0.74184895}
+Got Task job0-task1got task  {job0 job0-task1 0.74184895}
+launching   {job0 job0-task1 0.74184895}
+[Node Monitor] launchTask() for task:  job0-task1
+taskkk  &{job1 job1-task0 0.7558235}
+{job1 job1-task0 0.7558235}
+Got Task job1-task0got task  {job1 job1-task0 0.7558235}
+launching   {job1 job1-task0 0.7558235}
+[Node Monitor] launchTask() for task:  job1-task0
+[Node Monitor] getting task for job: job9
+[Node Monitor] getting task for job: job2
+[Node Monitor] EnqueueReservation() for jobID: job0[Node Monitor] EnqueueReservation() for jobID: job1taskkk  &{job9 job9-task1 0.9405091}
+{job9 job9-task1 0.9405091}
+Got Task job9-task1got task  {job9 job9-task1 0.9405091}
+launching   {job9 job9-task1 0.9405091}
+[Node Monitor] launchTask() for task:  job9-task1
+taskkk  &{job2 job2-task1 0.028303083}
+{job2 job2-task1 0.028303083}
+Got Task job2-task1got task  {job2 job2-task1 0.028303083}
+launching   {job2 job2-task1 0.028303083}
+[Node Monitor] launchTask() for task:  job2-task1
+[Node Monitor] getting task for job: job6
+[Node Monitor] getting task for job: job7
+[Node Monitor] EnqueueReservation() for jobID: job9[Node Monitor] EnqueueReservation() for jobID: job2taskkk  &{job6 job6-task1 0.3608714}
+{job6 job6-task1 0.3608714}
+Got Task job6-task1got task  {job6 job6-task1 0.3608714}
+launching   {job6 job6-task1 0.3608714}
+[Node Monitor] launchTask() for task:  job6-task1
+taskkk  &{job7 job7-task1 0.493142}
+{job7 job7-task1 0.493142}
+Got Task job7-task1got task  {job7 job7-task1 0.493142}
+launching   {job7 job7-task1 0.493142}
+[Node Monitor] launchTask() for task:  job7-task1
+[Node Monitor] getting task for job: job8
+[Node Monitor] getting task for job: job4
+[Node Monitor] EnqueueReservation() for jobID: job7[Node Monitor] EnqueueReservation() for jobID: job6taskkk  &{job4 job4-task1 0.51521266}
+{job4 job4-task1 0.51521266}
+Got Task job4-task1got task  {job4 job4-task1 0.51521266}
+taskkk  &{job8 job8-task1 0.36969283}
+{job8 job8-task1 0.36969283}
+Got Task job8-task1got task  {job8 job8-task1 0.36969283}
+launching   {job8 job8-task1 0.36969283}
+[Node Monitor] launchTask() for task:  job8-task1
+launching   {job4 job4-task1 0.51521266}
+[Node Monitor] launchTask() for task:  job4-task1
+[Node Monitor] getting task for job: job1
+[Node Monitor] getting task for job: job5
+[Node Monitor] EnqueueReservation() for jobID: job8[Node Monitor] EnqueueReservation() for jobID: job4taskkk  &{job5 job5-task1 0.29711226}
+{job5 job5-task1 0.29711226}
+Got Task job5-task1got task  {job5 job5-task1 0.29711226}
+launching   {job5 job5-task1 0.29711226}
+[Node Monitor] launchTask() for task:  job5-task1
+taskkk  &{job1 job1-task1 0.4038033}
+{job1 job1-task1 0.4038033}
+Got Task job1-task1got task  {job1 job1-task1 0.4038033}
+launching   {job1 job1-task1 0.4038033}
+[Node Monitor] launchTask() for task:  job1-task1
+[Node Monitor] getting task for job: job2
+[Node Monitor] getting task for job: job3
+[Node Monitor] EnqueueReservation() for jobID: job1[Node Monitor] EnqueueReservation() for jobID: job5taskkk  &{job3 job3-task2 0.5441556}
+taskkk  &{job2 job2-task2 0.15832828}
+{job2 job2-task2 0.15832828}
+Got Task job2-task2got task  {job2 job2-task2 0.15832828}
+{job3 job3-task2 0.5441556}
+Got Task job3-task2launching   {job2 job2-task2 0.15832828}
+[Node Monitor] launchTask() for task:  job2-task2
+got task  {job3 job3-task2 0.5441556}
+launching   {job3 job3-task2 0.5441556}
+[Node Monitor] launchTask() for task:  job3-task2
+[Node Monitor] getting task for job: job7
+[Node Monitor] getting task for job: job0
+[Node Monitor] EnqueueReservation() for jobID: job2[Node Monitor] EnqueueReservation() for jobID: job3taskkk  &{job7 job7-task2 0.9269868}
+{job7 job7-task2 0.9269868}
+Got Task job7-task2got task  {job7 job7-task2 0.9269868}
+launching   {job7 job7-task2 0.9269868}
+[Node Monitor] launchTask() for task:  job7-task2
+taskkk  &{job0 job0-task2 0.801055}
+{job0 job0-task2 0.801055}
+Got Task job0-task2got task  {job0 job0-task2 0.801055}
+launching   {job0 job0-task2 0.801055}
+[Node Monitor] launchTask() for task:  job0-task2
+[Node Monitor] getting task for job: job9
+[Node Monitor] getting task for job: job4
+[Node Monitor] EnqueueReservation() for jobID: job0[Node Monitor] EnqueueReservation() for jobID: job7taskkk  &{job4 job4-task2 0.81363994}
+{job4 job4-task2 0.81363994}
+Got Task job4-task2got task  {job4 job4-task2 0.81363994}
+launching   {job4 job4-task2 0.81363994}
+[Node Monitor] launchTask() for task:  job4-task2
+taskkk  &{job9 job9-task2 0.6645601}
+{job9 job9-task2 0.6645601}
+Got Task job9-task2got task  {job9 job9-task2 0.6645601}
+launching   {job9 job9-task2 0.6645601}
+[Node Monitor] launchTask() for task:  job9-task2
+[Node Monitor] getting task for job: job5
+[Node Monitor] getting task for job: job6
+[Node Monitor] EnqueueReservation() for jobID: job4[Node Monitor] EnqueueReservation() for jobID: job9taskkk  &{job6 job6-task2 0.5706733}
+{job6 job6-task2 0.5706733}
+Got Task job6-task2got task  {job6 job6-task2 0.5706733}
+launching   {job6 job6-task2 0.5706733}
+[Node Monitor] launchTask() for task:  job6-task2
+taskkk  &{job5 job5-task2 0.89436173}
+{job5 job5-task2 0.89436173}
+Got Task job5-task2got task  {job5 job5-task2 0.89436173}
+launching   {job5 job5-task2 0.89436173}
+[Node Monitor] launchTask() for task:  job5-task2
+[Node Monitor] getting task for job: job8
+[Node Monitor] getting task for job: job3
+[Node Monitor] EnqueueReservation() for jobID: job5[Node Monitor] EnqueueReservation() for jobID: job6taskkk  &{job8 job8-task2 0.23682255}
+{job8 job8-task2 0.23682255}
+Got Task job8-task2got task  {job8 job8-task2 0.23682255}
+launching   {job8 job8-task2 0.23682255}
+[Node Monitor] launchTask() for task:  job8-task2
+taskkk  &{job3 job3-task3 0.27850762}
+{job3 job3-task3 0.27850762}
+Got Task job3-task3got task  {job3 job3-task3 0.27850762}
+launching   {job3 job3-task3 0.27850762}
+[Node Monitor] launchTask() for task:  job3-task3
+[Node Monitor] getting task for job: job0
+[Node Monitor] getting task for job: job1
+[Node Monitor] EnqueueReservation() for jobID: job3[Node Monitor] EnqueueReservation() for jobID: job8taskkk  &{job1 job1-task2 0.13065112}
+{job1 job1-task2 0.13065112}
+Got Task job1-task2got task  {job1 job1-task2 0.13065112}
+taskkk  &{job0 job0-task3 0.73023146}
+{job0 job0-task3 0.73023146}
+Got Task job0-task3got task  {job0 job0-task3 0.73023146}
+launching   {job0 job0-task3 0.73023146}
+[Node Monitor] launchTask() for task:  job0-task3
+launching   {job1 job1-task2 0.13065112}
+[Node Monitor] launchTask() for task:  job1-task2
+[Node Monitor] getting task for job: job2
+[Node Monitor] getting task for job: job9
+[Node Monitor] EnqueueReservation() for jobID: job1[Node Monitor] EnqueueReservation() for jobID: job0taskkk  &{job2 job2-task3 0.60725343}
+{job2 job2-task3 0.60725343}
+Got Task job2-task3got task  {job2 job2-task3 0.60725343}
+launching   {job2 job2-task3 0.60725343}
+[Node Monitor] launchTask() for task:  job2-task3
+taskkk  &{job9 job9-task3 0.4377142}
+{job9 job9-task3 0.4377142}
+Got Task job9-task3got task  {job9 job9-task3 0.4377142}
+launching   {job9 job9-task3 0.4377142}
+[Node Monitor] launchTask() for task:  job9-task3
+[Node Monitor] getting task for job: job6
+[Node Monitor] getting task for job: job7
+[Node Monitor] EnqueueReservation() for jobID: job2[Node Monitor] EnqueueReservation() for jobID: job9taskkk  &{job6 job6-task3 0.8624914}
+{job6 job6-task3 0.8624914}
+Got Task job6-task3got task  {job6 job6-task3 0.8624914}
+launching   {job6 job6-task3 0.8624914}
+[Node Monitor] launchTask() for task:  job6-task3
+taskkk  &{job7 job7-task3 0.95494545}
+{job7 job7-task3 0.95494545}
+Got Task job7-task3got task  {job7 job7-task3 0.95494545}
+launching   {job7 job7-task3 0.95494545}
+[Node Monitor] launchTask() for task:  job7-task3
+[Node Monitor] getting task for job: job8
+[Node Monitor] getting task for job: job4
+[Node Monitor] EnqueueReservation() for jobID: job6[Node Monitor] EnqueueReservation() for jobID: job7taskkk  &{job4 job4-task3 0.3806572}
+{job4 job4-task3 0.3806572}
+Got Task job4-task3got task  {job4 job4-task3 0.3806572}
+launching   {job4 job4-task3 0.3806572}
+[Node Monitor] launchTask() for task:  job4-task3
+taskkk  &{job8 job8-task3 0.5352819}
+{job8 job8-task3 0.5352819}
+Got Task job8-task3got task  {job8 job8-task3 0.5352819}
+launching   {job8 job8-task3 0.5352819}
+[Node Monitor] launchTask() for task:  job8-task3
+[Node Monitor] getting task for job: job1
+[Node Monitor] getting task for job: job5
+[Node Monitor] EnqueueReservation() for jobID: job8[Node Monitor] EnqueueReservation() for jobID: job4taskkk  &{job5 job5-task3 0.097454615}
+{job5 job5-task3 0.097454615}
+Got Task job5-task3got task  {job5 job5-task3 0.097454615}
+launching   {job5 job5-task3 0.097454615}
+[Node Monitor] launchTask() for task:  job5-task3
+taskkk  &{job1 job1-task3 0.9859647}
+{job1 job1-task3 0.9859647}
+Got Task job1-task3got task  {job1 job1-task3 0.9859647}
+launching   {job1 job1-task3 0.9859647}
+[Node Monitor] launchTask() for task:  job1-task3
+[Node Monitor] getting task for job: job3
+[Node Monitor] getting task for job: job2
+[Node Monitor] EnqueueReservation() for jobID: job1[Node Monitor] EnqueueReservation() for jobID: job5taskkk  &{job2 job2-task4 0.9752416}
+{job2 job2-task4 0.9752416}
+Got Task job2-task4got task  {job2 job2-task4 0.9752416}
+launching   {job2 job2-task4 0.9752416}
+[Node Monitor] launchTask() for task:  job2-task4
+taskkk  &{job3 job3-task4 0.4231522}
+{job3 job3-task4 0.4231522}
+Got Task job3-task4got task  {job3 job3-task4 0.4231522}
+launching   {job3 job3-task4 0.4231522}
+[Node Monitor] launchTask() for task:  job3-task4
+[Node Monitor] getting task for job: job0
+[Node Monitor] getting task for job: job7
+[Node Monitor] EnqueueReservation() for jobID: job2[Node Monitor] EnqueueReservation() for jobID: job3taskkk  &{job0 job0-task4 0.18292491}
+{job0 job0-task4 0.18292491}
+Got Task job0-task4got task  {job0 job0-task4 0.18292491}
+taskkk  &{job7 job7-task4 0.34795398}
+{job7 job7-task4 0.34795398}
+Got Task job7-task4got task  {job7 job7-task4 0.34795398}
+launching   {job7 job7-task4 0.34795398}
+[Node Monitor] launchTask() for task:  job7-task4
+launching   {job0 job0-task4 0.18292491}
+[Node Monitor] launchTask() for task:  job0-task4
+[Node Monitor] getting task for job: job9
+[Node Monitor] getting task for job: job4
+[Node Monitor] EnqueueReservation() for jobID: job7[Node Monitor] EnqueueReservation() for jobID: job0taskkk  &{job4 job4-task4 0.31805816}
+{job4 job4-task4 0.31805816}
+Got Task job4-task4got task  {job4 job4-task4 0.31805816}
+launching   {job4 job4-task4 0.31805816}
+[Node Monitor] launchTask() for task:  job4-task4
+taskkk  &{job9 job9-task4 0.4246375}
+{job9 job9-task4 0.4246375}
+Got Task job9-task4got task  {job9 job9-task4 0.4246375}
+launching   {job9 job9-task4 0.4246375}
+[Node Monitor] launchTask() for task:  job9-task4
+[Node Monitor] getting task for job: job6
+[Node Monitor] getting task for job: job5
+[Node Monitor] EnqueueReservation() for jobID: job9[Node Monitor] EnqueueReservation() for jobID: job4taskkk  &{job5 job5-task4 0.97691685}
+{job5 job5-task4 0.97691685}
+Got Task job5-task4got task  {job5 job5-task4 0.97691685}
+taskkk  &{job6 job6-task4 0.29311424}
+{job6 job6-task4 0.29311424}
+launching   {job5 job5-task4 0.97691685}
+[Node Monitor] launchTask() for task:  job5-task4
+Got Task job6-task4got task  {job6 job6-task4 0.29311424}
+launching   {job6 job6-task4 0.29311424}
+[Node Monitor] launchTask() for task:  job6-task4
+[Node Monitor] getting task for job: job8
+[Node Monitor] getting task for job: job3
+[Node Monitor] EnqueueReservation() for jobID: job6[Node Monitor] EnqueueReservation() for jobID: job5taskkk  &{job8 job8-task4 0.1872461}
+taskkk  &{job3 job3-task5 0.5305857}
+{job3 job3-task5 0.5305857}
+{job8 job8-task4 0.1872461}
+Got Task job8-task4Got Task job3-task5got task  {job3 job3-task5 0.5305857}
+launching   {job3 job3-task5 0.5305857}
+[Node Monitor] launchTask() for task:  job3-task5
+got task  {job8 job8-task4 0.1872461}
+launching   {job8 job8-task4 0.1872461}
+[Node Monitor] launchTask() for task:  job8-task4
+[Node Monitor] getting task for job: job1
+[Node Monitor] getting task for job: job0
+[Node Monitor] EnqueueReservation() for jobID: job8[Node Monitor] EnqueueReservation() for jobID: job3taskkk  &{job0 job0-task5 0.4283571}
+{job0 job0-task5 0.4283571}
+Got Task job0-task5got task  {job0 job0-task5 0.4283571}
+launching   {job0 job0-task5 0.4283571}
+[Node Monitor] launchTask() for task:  job0-task5
+taskkk  &{job1 job1-task4 0.89634174}
+{job1 job1-task4 0.89634174}
+Got Task job1-task4got task  {job1 job1-task4 0.89634174}
+launching   {job1 job1-task4 0.89634174}
+[Node Monitor] launchTask() for task:  job1-task4
+[Node Monitor] getting task for job: job9
+[Node Monitor] getting task for job: job2
+[Node Monitor] EnqueueReservation() for jobID: job0[Node Monitor] EnqueueReservation() for jobID: job1taskkk  &{job9 job9-task5 0.68682307}
+{job9 job9-task5 0.68682307}
+Got Task job9-task5got task  {job9 job9-task5 0.68682307}
+taskkk  &{job2 job2-task5 0.079453625}
+{job2 job2-task5 0.079453625}
+Got Task job2-task5got task  {job2 job2-task5 0.079453625}
+launching   {job9 job9-task5 0.68682307}
+[Node Monitor] launchTask() for task:  job9-task5
+launching   {job2 job2-task5 0.079453625}
+[Node Monitor] launchTask() for task:  job2-task5
+[Node Monitor] getting task for job: job7
+[Node Monitor] getting task for job: job6
+[Node Monitor] EnqueueReservation() for jobID: job2[Node Monitor] EnqueueReservation() for jobID: job9taskkk  &{job6 job6-task5 0.29708257}
+{job6 job6-task5 0.29708257}
+Got Task job6-task5got task  {job6 job6-task5 0.29708257}
+launching   {job6 job6-task5 0.29708257}
+[Node Monitor] launchTask() for task:  job6-task5
+taskkk  &{job7 job7-task5 0.6908388}
+{job7 job7-task5 0.6908388}
+Got Task job7-task5got task  {job7 job7-task5 0.6908388}
+launching   {job7 job7-task5 0.6908388}
+[Node Monitor] launchTask() for task:  job7-task5
+[Node Monitor] getting task for job: job4
+[Node Monitor] getting task for job: job8
+[Node Monitor] EnqueueReservation() for jobID: job7[Node Monitor] EnqueueReservation() for jobID: job6taskkk  &{job8 job8-task5 0.2388407}
+{job8 job8-task5 0.2388407}
+Got Task job8-task5got task  {job8 job8-task5 0.2388407}
+launching   {job8 job8-task5 0.2388407}
+taskkk  &{job4 job4-task5 0.46888983}
+{job4 job4-task5 0.46888983}
+Got Task job4-task5[Node Monitor] launchTask() for task:  job8-task5
+got task  {job4 job4-task5 0.46888983}
+launching   {job4 job4-task5 0.46888983}
+[Node Monitor] launchTask() for task:  job4-task5
+[Node Monitor] getting task for job: job5
+[Node Monitor] getting task for job: job1
+[Node Monitor] EnqueueReservation() for jobID: job4[Node Monitor] EnqueueReservation() for jobID: job8taskkk  &{job5 job5-task5 0.074291}
+{job5 job5-task5 0.074291}
+Got Task job5-task5got task  {job5 job5-task5 0.074291}
+launching   {job5 job5-task5 0.074291}
+[Node Monitor] launchTask() for task:  job5-task5
+taskkk  &{job1 job1-task5 0.32208398}
+{job1 job1-task5 0.32208398}
+Got Task job1-task5got task  {job1 job1-task5 0.32208398}
+launching   {job1 job1-task5 0.32208398}
+[Node Monitor] launchTask() for task:  job1-task5
+[Node Monitor] getting task for job: job2
+[Node Monitor] getting task for job: job3
+[Node Monitor] EnqueueReservation() for jobID: job1[Node Monitor] EnqueueReservation() for jobID: job5taskkk  &{job2 job2-task6 0.5948086}
+{job2 job2-task6 0.5948086}
+Got Task job2-task6got task  {job2 job2-task6 0.5948086}
+launching   {job2 job2-task6 0.5948086}
+[Node Monitor] launchTask() for task:  job2-task6
+taskkk  &{job3 job3-task6 0.2535405}
+{job3 job3-task6 0.2535405}
+Got Task job3-task6got task  {job3 job3-task6 0.2535405}
+launching   {job3 job3-task6 0.2535405}
+[Node Monitor] launchTask() for task:  job3-task6
+[Node Monitor] getting task for job: job0
+[Node Monitor] getting task for job: job7
+[Node Monitor] EnqueueReservation() for jobID: job2[Node Monitor] EnqueueReservation() for jobID: job3taskkk  &{job7 job7-task6 0.7109072}
+{job7 job7-task6 0.7109072}
+Got Task job7-task6got task  {job7 job7-task6 0.7109072}
+launching   {job7 job7-task6 0.7109072}
+[Node Monitor] launchTask() for task:  job7-task6
+taskkk  &{job0 job0-task6 0.89699197}
+{job0 job0-task6 0.89699197}
+Got Task job0-task6got task  {job0 job0-task6 0.89699197}
+launching   {job0 job0-task6 0.89699197}
+[Node Monitor] launchTask() for task:  job0-task6
+[Node Monitor] getting task for job: job4
+[Node Monitor] getting task for job: job9
+[Node Monitor] EnqueueReservation() for jobID: job7[Node Monitor] EnqueueReservation() for jobID: job0taskkk  &{job4 job4-task6 0.28303415}
+{job4 job4-task6 0.28303415}
+Got Task job4-task6got task  {job4 job4-task6 0.28303415}
+launching   {job4 job4-task6 0.28303415}
+[Node Monitor] launchTask() for task:  job4-task6
+taskkk  &{job9 job9-task6 0.06563702}
+{job9 job9-task6 0.06563702}
+Got Task job9-task6got task  {job9 job9-task6 0.06563702}
+launching   {job9 job9-task6 0.06563702}
+[Node Monitor] launchTask() for task:  job9-task6
+[Node Monitor] getting task for job: job6
+[Node Monitor] getting task for job: job5
+[Node Monitor] EnqueueReservation() for jobID: job4[Node Monitor] EnqueueReservation() for jobID: job9taskkk  &{job5 job5-task6 0.22228941}
+{job5 job5-task6 0.22228941}
+Got Task job5-task6taskkk  &{job6 job6-task6 0.752573}
+{job6 job6-task6 0.752573}
+Got Task job6-task6got task  {job6 job6-task6 0.752573}
+launching   {job6 job6-task6 0.752573}
+[Node Monitor] launchTask() for task:  job6-task6
+got task  {job5 job5-task6 0.22228941}
+launching   {job5 job5-task6 0.22228941}
+[Node Monitor] launchTask() for task:  job5-task6
+[Node Monitor] getting task for job: job3
+[Node Monitor] getting task for job: job8
+[Node Monitor] EnqueueReservation() for jobID: job5[Node Monitor] EnqueueReservation() for jobID: job6taskkk  &{job8 job8-task6 0.6280982}
+{job8 job8-task6 0.6280982}
+Got Task job8-task6got task  {job8 job8-task6 0.6280982}
+taskkk  &{job3 job3-task7 0.282081}
+{job3 job3-task7 0.282081}
+Got Task job3-task7got task  {job3 job3-task7 0.282081}
+launching   {job8 job8-task6 0.6280982}
+[Node Monitor] launchTask() for task:  job8-task6
+launching   {job3 job3-task7 0.282081}
+[Node Monitor] launchTask() for task:  job3-task7
+[Node Monitor] getting task for job: job0
+[Node Monitor] getting task for job: job1
+[Node Monitor] EnqueueReservation() for jobID: job3[Node Monitor] EnqueueReservation() for jobID: job8taskkk  &{job0 job0-task7 0.6826535}
+{job0 job0-task7 0.6826535}
+Got Task job0-task7got task  {job0 job0-task7 0.6826535}
+launching   {job0 job0-task7 0.6826535}
+[Node Monitor] launchTask() for task:  job0-task7
+taskkk  &{job1 job1-task6 0.7211478}
+{job1 job1-task6 0.7211478}
+Got Task job1-task6got task  {job1 job1-task6 0.7211478}
+launching   {job1 job1-task6 0.7211478}
+[Node Monitor] launchTask() for task:  job1-task6
+[Node Monitor] getting task for job: job2
+[Node Monitor] getting task for job: job9
+[Node Monitor] EnqueueReservation() for jobID: job1[Node Monitor] EnqueueReservation() for jobID: job0taskkk  &{job2 job2-task7 0.05912065}
+{job2 job2-task7 0.05912065}
+Got Task job2-task7got task  {job2 job2-task7 0.05912065}
+launching   {job2 job2-task7 0.05912065}
+[Node Monitor] launchTask() for task:  job2-task7
+taskkk  &{job9 job9-task7 0.15651925}
+{job9 job9-task7 0.15651925}
+Got Task job9-task7got task  {job9 job9-task7 0.15651925}
+launching   {job9 job9-task7 0.15651925}
+[Node Monitor] launchTask() for task:  job9-task7
+[Node Monitor] getting task for job: job7
+[Node Monitor] getting task for job: job6
+[Node Monitor] EnqueueReservation() for jobID: job9[Node Monitor] EnqueueReservation() for jobID: job2taskkk  &{job6 job6-task7 0.20658267}
+{job6 job6-task7 0.20658267}
+Got Task job6-task7got task  {job6 job6-task7 0.20658267}
+launching   {job6 job6-task7 0.20658267}
+[Node Monitor] launchTask() for task:  job6-task7
+taskkk  &{job7 job7-task7 0.5637796}
+{job7 job7-task7 0.5637796}
+Got Task job7-task7got task  {job7 job7-task7 0.5637796}
+launching   {job7 job7-task7 0.5637796}
+[Node Monitor] launchTask() for task:  job7-task7
+[Node Monitor] getting task for job: job4
+[Node Monitor] getting task for job: job8
+[Node Monitor] EnqueueReservation() for jobID: job7[Node Monitor] EnqueueReservation() for jobID: job6taskkk  &{job8 job8-task7 0.12675293}
+{job8 job8-task7 0.12675293}
+Got Task job8-task7taskkk  &{job4 job4-task7 0.29310185}
+{job4 job4-task7 0.29310185}
+Got Task job4-task7got task  {job8 job8-task7 0.12675293}
+launching   {job8 job8-task7 0.12675293}
+[Node Monitor] launchTask() for task:  job8-task7
+got task  {job4 job4-task7 0.29310185}
+launching   {job4 job4-task7 0.29310185}
+[Node Monitor] launchTask() for task:  job4-task7
+[Node Monitor] getting task for job: job1
+[Node Monitor] getting task for job: job5
+[Node Monitor] EnqueueReservation() for jobID: job8[Node Monitor] EnqueueReservation() for jobID: job4taskkk  &{job5 job5-task7 0.6810783}
+{job5 job5-task7 0.6810783}
+Got Task job5-task7taskkk  &{job1 job1-task7 0.6445398}
+{job1 job1-task7 0.6445398}
+Got Task job1-task7got task  {job1 job1-task7 0.6445398}
+launching   {job1 job1-task7 0.6445398}
+[Node Monitor] launchTask() for task:  job1-task7
+got task  {job5 job5-task7 0.6810783}
+launching   {job5 job5-task7 0.6810783}
+[Node Monitor] launchTask() for task:  job5-task7
+[Node Monitor] getting task for job: job2
+[Node Monitor] getting task for job: job3
+[Node Monitor] EnqueueReservation() for jobID: job1[Node Monitor] EnqueueReservation() for jobID: job5taskkk  &{job2 job2-task8 0.6920246}
+{job2 job2-task8 0.6920246}
+Got Task job2-task8got task  {job2 job2-task8 0.6920246}
+launching   {job2 job2-task8 0.6920246}
+[Node Monitor] launchTask() for task:  job2-task8
+taskkk  &{job3 job3-task8 0.7886049}
+{job3 job3-task8 0.7886049}
+Got Task job3-task8got task  {job3 job3-task8 0.7886049}
+launching   {job3 job3-task8 0.7886049}
+[Node Monitor] launchTask() for task:  job3-task8
+[Node Monitor] getting task for job: job7
+[Node Monitor] getting task for job: job0
+[Node Monitor] EnqueueReservation() for jobID: job2[Node Monitor] EnqueueReservation() for jobID: job3taskkk  &{job7 job7-task8 0.64948946}
+taskkk  &{job0 job0-task8 0.97892934}
+{job0 job0-task8 0.97892934}
+{job7 job7-task8 0.64948946}
+Got Task job7-task8got task  {job7 job7-task8 0.64948946}
+launching   {job7 job7-task8 0.64948946}
+Got Task job0-task8got task  {job0 job0-task8 0.97892934}
+launching   {job0 job0-task8 0.97892934}
+[Node Monitor] launchTask() for task:  job0-task8
+[Node Monitor] launchTask() for task:  job7-task8
+[Node Monitor] getting task for job: job4
+[Node Monitor] getting task for job: job9
+[Node Monitor] EnqueueReservation() for jobID: job0[Node Monitor] EnqueueReservation() for jobID: job7taskkk  &{job9 job9-task8 0.09696952}
+{job9 job9-task8 0.09696952}
+Got Task job9-task8got task  {job9 job9-task8 0.09696952}
+launching   {job9 job9-task8 0.09696952}
+[Node Monitor] launchTask() for task:  job9-task8
+taskkk  &{job4 job4-task8 0.67908466}
+{job4 job4-task8 0.67908466}
+Got Task job4-task8got task  {job4 job4-task8 0.67908466}
+launching   {job4 job4-task8 0.67908466}
+[Node Monitor] launchTask() for task:  job4-task8
+[Node Monitor] getting task for job: job6
+[Node Monitor] getting task for job: job5
+[Node Monitor] EnqueueReservation() for jobID: job9[Node Monitor] EnqueueReservation() for jobID: job4taskkk  &{job6 job6-task8 0.865335}
+{job6 job6-task8 0.865335}
+Got Task job6-task8got task  {job6 job6-task8 0.865335}
+taskkk  &{job5 job5-task8 0.24151509}
+{job5 job5-task8 0.24151509}
+Got Task job5-task8launching   {job6 job6-task8 0.865335}
+[Node Monitor] launchTask() for task:  job6-task8
+got task  {job5 job5-task8 0.24151509}
+launching   {job5 job5-task8 0.24151509}
+[Node Monitor] launchTask() for task:  job5-task8
+[Node Monitor] getting task for job: job3
+[Node Monitor] getting task for job: job8
+[Node Monitor] EnqueueReservation() for jobID: job5[Node Monitor] EnqueueReservation() for jobID: job6taskkk  &{job8 job8-task8 0.2813303}
+{job8 job8-task8 0.2813303}
+Got Task job8-task8got task  {job8 job8-task8 0.2813303}
+launching   {job8 job8-task8 0.2813303}
+[Node Monitor] launchTask() for task:  job8-task8
+taskkk  &{job3 job3-task9 0.36180547}
+{job3 job3-task9 0.36180547}
+Got Task job3-task9got task  {job3 job3-task9 0.36180547}
+launching   {job3 job3-task9 0.36180547}
+[Node Monitor] launchTask() for task:  job3-task9
+[Node Monitor] getting task for job: job0
+[Node Monitor] getting task for job: job1
+[Node Monitor] EnqueueReservation() for jobID: job3[Node Monitor] EnqueueReservation() for jobID: job8taskkk  &{job1 job1-task8 0.085520506}
+{job1 job1-task8 0.085520506}
+Got Task job1-task8got task  {job1 job1-task8 0.085520506}
+launching   {job1 job1-task8 0.085520506}
+[Node Monitor] launchTask() for task:  job1-task8
+taskkk  &{job0 job0-task9 0.92221224}
+{job0 job0-task9 0.92221224}
+Got Task job0-task9got task  {job0 job0-task9 0.92221224}
+launching   {job0 job0-task9 0.92221224}
+[Node Monitor] launchTask() for task:  job0-task9
+[Node Monitor] getting task for job: job9
+[Node Monitor] getting task for job: job2
+[Node Monitor] EnqueueReservation() for jobID: job0[Node Monitor] EnqueueReservation() for jobID: job1taskkk  &{job9 job9-task9 0.21426387}
+{job9 job9-task9 0.21426387}
+Got Task job9-task9got task  {job9 job9-task9 0.21426387}
+launching   {job9 job9-task9 0.21426387}
+[Node Monitor] launchTask() for task:  job9-task9
+taskkk  &{job2 job2-task9 0.30152267}
+{job2 job2-task9 0.30152267}
+Got Task job2-task9got task  {job2 job2-task9 0.30152267}
+launching   {job2 job2-task9 0.30152267}
+[Node Monitor] launchTask() for task:  job2-task9
+[Node Monitor] getting task for job: job7
+[Node Monitor] getting task for job: job6
+[Node Monitor] EnqueueReservation() for jobID: job2[Node Monitor] EnqueueReservation() for jobID: job9taskkk  &{job6 job6-task9 0.69671917}
+{job6 job6-task9 0.69671917}
+Got Task job6-task9got task  {job6 job6-task9 0.69671917}
+launching   {job6 job6-task9 0.69671917}
+[Node Monitor] launchTask() for task:  job6-task9
+taskkk  &{job7 job7-task9 0.551765}
+{job7 job7-task9 0.551765}
+Got Task job7-task9got task  {job7 job7-task9 0.551765}
+launching   {job7 job7-task9 0.551765}
+[Node Monitor] launchTask() for task:  job7-task9
+[Node Monitor] getting task for job: job4
+[Node Monitor] getting task for job: job8
+[Node Monitor] EnqueueReservation() for jobID: job7[Node Monitor] EnqueueReservation() for jobID: job6taskkk  &{job4 job4-task9 0.21855305}
+{job4 job4-task9 0.21855305}
+Got Task job4-task9got task  {job4 job4-task9 0.21855305}
+taskkk  &{job8 job8-task9 0.41032284}
+{job8 job8-task9 0.41032284}
+Got Task job8-task9launching   {job4 job4-task9 0.21855305}
+[Node Monitor] launchTask() for task:  job4-task9
+got task  {job8 job8-task9 0.41032284}
+launching   {job8 job8-task9 0.41032284}
+[Node Monitor] launchTask() for task:  job8-task9
+[Node Monitor] getting task for job: job5
+[Node Monitor] getting task for job: job1
+[Node Monitor] EnqueueReservation() for jobID: job4[Node Monitor] EnqueueReservation() for jobID: job8taskkk  &{job1 job1-task9 0.6695753}
+{job1 job1-task9 0.6695753}
+Got Task job1-task9got task  {job1 job1-task9 0.6695753}
+launching   {job1 job1-task9 0.6695753}
+[Node Monitor] launchTask() for task:  job1-task9
+taskkk  &{job5 job5-task9 0.31152245}
+{job5 job5-task9 0.31152245}
+Got Task job5-task9got task  {job5 job5-task9 0.31152245}
+launching   {job5 job5-task9 0.31152245}
+[Node Monitor] launchTask() for task:  job5-task9
+[Node Monitor] getting task for job: job3
+[Node Monitor] getting task for job: job2
+[Node Monitor] EnqueueReservation() for jobID: job5[Node Monitor] EnqueueReservation() for jobID: job1taskkk  &{  0}
+{  0}
+Got Task got task  {  0}
+taskkk  &{  0}
+{  0}
+Got Task got task  {  0}
+[Node Monitor] getting task for job: job7
+[Node Monitor] getting task for job: job0
+[Node Monitor] EnqueueReservation() for jobID: job2taskkk  &{  0}
+taskkk  &{  0}
+[Node Monitor] EnqueueReservation() for jobID: job3{  0}
+Got Task got task  {  0}
+{  0}
+Got Task got task  {  0}
+[Node Monitor] getting task for job: job9
+[Node Monitor] EnqueueReservation() for jobID: job0[Node Monitor] getting task for job: job4
+taskkk  &{  0}
+{  0}
+Got Task got task  {  0}
+[Node Monitor] getting task for job: job6
+[Node Monitor] EnqueueReservation() for jobID: job7[Node Monitor] EnqueueReservation() for jobID: job9taskkk  &{  0}
+{  0}
+Got Task got task  {  0}
+taskkk  &{  0}
+{  0}
+Got Task got task  {  0}
+[Node Monitor] getting task for job: job5
+[Node Monitor] EnqueueReservation() for jobID: job1[Node Monitor] EnqueueReservation() for jobID: job6[Node Monitor] EnqueueReservation() for jobID: job8[Node Monitor] EnqueueReservation() for jobID: job7[Node Monitor] EnqueueReservation() for jobID: job4[Node Monitor] EnqueueReservation() for jobID: job2taskkk  &{  0}
+{  0}
+Got Task got task  {  0}
+[Node Monitor] EnqueueReservation() for jobID: job4[Node Monitor] EnqueueReservation() for jobID: job5[Node Monitor] EnqueueReservation() for jobID: job6[Node Monitor] EnqueueReservation() for jobID: job4[Node Monitor] EnqueueReservation() for jobID: job1[Node Monitor] EnqueueReservation() for jobID: job0[Node Monitor] EnqueueReservation() for jobID: job8[Node Monitor] EnqueueReservation() for jobID: job6[Node Monitor] EnqueueReservation() for jobID: job4[Node Monitor] EnqueueReservation() for jobID: job2[Node Monitor] EnqueueReservation() for jobID: job5[Node Monitor] EnqueueReservation() for jobID: job8[Node Monitor] EnqueueReservation() for jobID: job3[Node Monitor] EnqueueReservation() for jobID: job9[Node Monitor] EnqueueReservation() for jobID: job0[Node Monitor] EnqueueReservation() for jobID: job7[Node Monitor] EnqueueReservation() for jobID: job1[Node Monitor] EnqueueReservation() for jobID: job2[Node Monitor] EnqueueReservation() for jobID: job9[Node Monitor] EnqueueReservation() for jobID: job4[Node Monitor] EnqueueReservation() for jobID: job6[Node Monitor] EnqueueReservation() for jobID: job1[Node Monitor] EnqueueReservation() for jobID: job5[Node Monitor] EnqueueReservation() for jobID: job7[Node Monitor] EnqueueReservation() for jobID: job3[Node Monitor] EnqueueReservation() for jobID: job8[Node Monitor] EnqueueReservation() for jobID: job0[Node Monitor] EnqueueReservation() for jobID: job5[Node Monitor] EnqueueReservation() for jobID: job1[Node Monitor] EnqueueReservation() for jobID: job2[Node Monitor] EnqueueReservation() for jobID: job0[Node Monitor] EnqueueReservation() for jobID: job6[Node Monitor] EnqueueReservation() for jobID: job7[Node Monitor] EnqueueReservation() for jobID: job8[Node Monitor] EnqueueReservation() for jobID: job9[Node Monitor] EnqueueReservation() for jobID: job4[Node Monitor] EnqueueReservation() for jobID: job3[Node Monitor] EnqueueReservation() for jobID: job1[Node Monitor] EnqueueReservation() for jobID: job5[Node Monitor] EnqueueReservation() for jobID: job6[Node Monitor] EnqueueReservation() for jobID: job0[Node Monitor] EnqueueReservation() for jobID: job2[Node Monitor] EnqueueReservation() for jobID: job7[Node Monitor] EnqueueReservation() for jobID: job9[Node Monitor] EnqueueReservation() for jobID: job8[Node Monitor] EnqueueReservation() for jobID: job1[Node Monitor] EnqueueReservation() for jobID: job3[Node Monitor] EnqueueReservation() for jobID: job4[Node Monitor] EnqueueReservation() for jobID: job2[Node Monitor] EnqueueReservation() for jobID: job0[Node Monitor] EnqueueReservation() for jobID: job8[Node Monitor] EnqueueReservation() for jobID: job3[Node Monitor] EnqueueReservation() for jobID: job5[Node Monitor] EnqueueReservation() for jobID: job6[Node Monitor] EnqueueReservation() for jobID: job7[Node Monitor] EnqueueReservation() for jobID: job9[Node Monitor] EnqueueReservation() for jobID: job1[Node Monitor] EnqueueReservation() for jobID: job4[Node Monitor] EnqueueReservation() for jobID: job2[Node Monitor] EnqueueReservation() for jobID: job6[Node Monitor] EnqueueReservation() for jobID: job0[Node Monitor] EnqueueReservation() for jobID: job5[Node Monitor] EnqueueReservation() for jobID: job7[Node Monitor] EnqueueReservation() for jobID: job8[Node Monitor] EnqueueReservation() for jobID: job6[Node Monitor] EnqueueReservation() for jobID: job9[Node Monitor] EnqueueReservation() for jobID: job3[Node Monitor] EnqueueReservation() for jobID: job1[Node Monitor] EnqueueReservation() for jobID: job2[Node Monitor] EnqueueReservation() for jobID: job5[Node Monitor] EnqueueReservation() for jobID: job4[Node Monitor] EnqueueReservation() for jobID: job0[Node Monitor] EnqueueReservation() for jobID: job3[Node Monitor] EnqueueReservation() for jobID: job8[Node Monitor] EnqueueReservation() for jobID: job7[Node Monitor] EnqueueReservation() for jobID: job9[Node Monitor] EnqueueReservation() for jobID: job5[Node Monitor] EnqueueReservation() for jobID: job3[Node Monitor] EnqueueReservation() for jobID: job9

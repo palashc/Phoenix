@@ -23,7 +23,7 @@ type ECState struct {
 	availWorkers []bool
 
 	// channels for communicating with workers
-	taskChans []chan *types.Task
+	taskChans []chan types.Task
 
 	// buffered channel should have slotCount size
 	doneChan chan taskDone
@@ -44,7 +44,7 @@ func NewExecutor(myID int, mySlotCount int, myNmClient phoenix.MonitorInterface)
 		id:           myID,
 		slotCount:    mySlotCount,
 		availWorkers: make([]bool, mySlotCount),
-		taskChans:    make([]chan *types.Task, mySlotCount),
+		taskChans:    make([]chan types.Task, mySlotCount),
 		doneChan:     make(chan taskDone, mySlotCount),
 		nmClient:     myNmClient,
 	}
@@ -62,12 +62,15 @@ func (ec *ECState) initWorkerPool() {
 
 	// launch all workers
 	for wID := 0; wID < ec.slotCount; wID++ {
+		fmt.Println("started worker ", wID)
+		ec.taskChans[wID] = make(chan types.Task)
 		go Worker(wID, ec.taskChans[wID], ec.doneChan)
 
 		ec.availWorkers[wID] = true
 	}
 
 	// launch long-living worker coordinator
+	fmt.Println("started wc")
 	go ec.WorkerCoordinator()
 }
 
@@ -75,6 +78,7 @@ func (ec *ECState) initWorkerPool() {
 func (ec *ECState) WorkerCoordinator() {
 	for {
 		// find worker that has finished; block on doneChannel
+		fmt.Println("gotFinishedTask")
 		finishedTask := <-ec.doneChan
 
 		ec.lock.Lock()
@@ -99,11 +103,11 @@ func (ec *ECState) LaunchTask(task types.Task, ret *bool) error {
 	defer ec.lock.Lock()
 
 	*ret = true
-
+	fmt.Println("launchingggg")
 	for wID := 0; wID < ec.slotCount; wID++ {
-		fmt.Println("launchingggg")
 		if ec.availWorkers[wID] {
-			ec.taskChans[wID] <- &task
+			fmt.Println("launchingggg")
+			ec.taskChans[wID] <- task
 			return nil
 		}
 	}

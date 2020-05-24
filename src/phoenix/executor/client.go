@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"fmt"
 	"net/rpc"
 	"phoenix/types"
 
@@ -36,11 +37,12 @@ func (ec *ExecutorClient) rpcConn() error {
 func (ec *ExecutorClient) LaunchTask(task types.Task, ret *bool) error {
 
 	err := ec.rpcConn()
+	fmt.Println("exec ", err)
 	if err != nil {
 		return err
 	}
-
-	err = ec.conn.Call("Executor.LaunchTask", task, ret)
+	fmt.Println("ready set go")
+	err = ec.conn.Call("ECState.LaunchTask", task, ret)
 	if err != nil {
 		return err
 	}
