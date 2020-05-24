@@ -45,12 +45,13 @@ func NewTaskScheduler(addr string, monitorClientPool map[int]phoenix.MonitorInte
 	return &TaskScheduler{
 		MonitorClientPool: monitorClientPool,
 		jobStatusLock:     sync.Mutex{},
-		jobStatus:         nil,
-		jobLeftTask:       nil,
+		jobStatus:         make(map[string]map[string]*types.TaskRecord),
+		jobLeftTask:       make(map[string]int),
 		jobMapLock:        sync.Mutex{},
-		jobMap:            nil,
+		jobMap:            make(map[string]types.Job),
 		taskToJobLock:     sync.Mutex{},
-		taskToJob:         nil,
+		taskToJob:         make(map[string]string),
+		Addr:              addr,
 	}
 }
 

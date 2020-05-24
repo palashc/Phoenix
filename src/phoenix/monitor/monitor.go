@@ -23,7 +23,7 @@ type NodeMonitor struct {
 
 const NUM_SLOTS = 4
 
-func NewNodeMonitor(executorClient phoenix.ExecutorInterface, schedulers map[string] phoenix.TaskSchedulerInterface) *NodeMonitor {
+func NewNodeMonitor(executorClient phoenix.ExecutorInterface, schedulers map[string]phoenix.TaskSchedulerInterface) *NodeMonitor {
 
 	return &NodeMonitor{
 		cancelled:        make(map[string]bool),
