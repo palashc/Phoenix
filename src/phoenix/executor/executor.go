@@ -97,7 +97,7 @@ func (ec *ECState) WorkerCoordinator() {
 
 func (ec *ECState) LaunchTask(task types.Task, ret *bool) error {
 	ec.lock.Lock()
-	defer ec.lock.Lock()
+	defer ec.lock.Unlock()
 
 	*ret = true
 
