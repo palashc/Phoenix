@@ -40,7 +40,7 @@ func (ec *ExecutorClient) LaunchTask(task types.Task, ret *bool) error {
 		return err
 	}
 
-	err = ec.conn.Call("Executor.LaunchTask", task, ret)
+	err = ec.conn.Call("ECState.LaunchTask", task, ret)
 	if err != nil {
 		return err
 	}

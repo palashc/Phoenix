@@ -7,7 +7,7 @@ import (
 
 // not exported
 type taskDone struct {
-	taskID string
+	taskID   string
 	workerID int
 }
 

@@ -188,13 +188,13 @@ func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
 		queuePos := 0
 
 		targetWorkerId := probeNodesList[targetIndex%len(probeNodesList)]
-		e := ts.MonitorClientPool[targetWorkerId].EnqueueReservation(taskR, &queuePos)
+		_ = ts.MonitorClientPool[targetWorkerId].EnqueueReservation(taskR, &queuePos)
 
-		if e != nil {
-			// Remove the inactive back
-			probeNodesList = append(probeNodesList[:targetIndex], probeNodesList[targetIndex+1:]...)
-			continue
-		}
+		// if e != nil {
+		// 	// Remove the inactive back
+		// 	probeNodesList = append(probeNodesList[:targetIndex], probeNodesList[targetIndex+1:]...)
+		// 	continue
+		// }
 
 		enqueueCount--
 		targetIndex++
@@ -211,9 +211,9 @@ func (ts *TaskScheduler) selectEnqueueWorker(probeCount int) map[int]bool {
 
 		targetWorkerId := rand.Int() % len(ts.MonitorClientPool)
 
-// 		if _, found := probeNodes[targetWorkerId]; found {
-// 			continue
-// 		}
+		// 		if _, found := probeNodes[targetWorkerId]; found {
+		// 			continue
+		// 		}
 
 		//var _ignore, queueLength int
 		//e := ts.MonitorClientPool[targetWorkerId].Probe(_ignore, &queueLength)
