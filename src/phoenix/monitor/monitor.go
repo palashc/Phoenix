@@ -41,7 +41,7 @@ Handles an incoming task reservation from the scheduler.
 Gets and launches the task if there is a slot available.
 Otherwise, adds the reservation to the queue.
 */
-func (nm *NodeMonitor) EnqueueReservation(taskReservation *types.TaskReservation, position *int) error {
+func (nm *NodeMonitor) EnqueueReservation(taskReservation types.TaskReservation, position *int) error {
 
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
@@ -134,7 +134,7 @@ func (nm *NodeMonitor) CancelTaskReservation(jobID string, ret *bool) error {
 /*
 Gets the task information from the scheduler for a reservation.
 */
-func (nm *NodeMonitor) getTask(taskReservation *types.TaskReservation) (*types.Task, error) {
+func (nm *NodeMonitor) getTask(taskReservation types.TaskReservation) (types.Task, error) {
 
 	schedulerAddr := taskReservation.SchedulerAddr
 	schedulerClient, err := nm.getSchedulerClient(schedulerAddr)
@@ -149,16 +149,16 @@ func (nm *NodeMonitor) getTask(taskReservation *types.TaskReservation) (*types.T
 		return nil, fmt.Errorf("[getTask] Unable to get task %v from scheduler %v : %q", jobID, schedulerAddr, err)
 	}
 
-	return &task, nil
+	return task, nil
 }
 
 /*
 Launch a task on the application executor.
 */
-func (nm *NodeMonitor) launchTask(task *types.Task) error {
+func (nm *NodeMonitor) launchTask(task types.Task) error {
 
 	var ret bool
-	err := nm.executorClient.LaunchTask(*task, &ret)
+	err := nm.executorClient.LaunchTask(task, &ret)
 	if err != nil {
 		return err
 	}
@@ -203,7 +203,7 @@ func (nm *NodeMonitor) attemptLaunchTask() {
 /*
 Helper method to get a task and launch it
 */
-func (nm *NodeMonitor) getAndLaunchTask(taskReservation *types.TaskReservation) error {
+func (nm *NodeMonitor) getAndLaunchTask(taskReservation types.TaskReservation) error {
 
 	task, err := nm.getTask(taskReservation)
 	if err != nil {
