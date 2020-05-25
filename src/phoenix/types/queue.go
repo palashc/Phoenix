@@ -1,3 +1,5 @@
+// TODO: Either add the MIT Licensing for this open-source code or use the github collection directly
+
 package types
 
 type (

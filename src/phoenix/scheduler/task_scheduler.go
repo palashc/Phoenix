@@ -6,6 +6,7 @@ import (
 	"phoenix"
 	"phoenix/types"
 	"sync"
+	"time"
 )
 
 const DefaultSampleRatio = 2
@@ -22,6 +23,9 @@ type TaskScheduler struct {
 
 	// Monitors that we are able to contact
 	MonitorClientPool map[int]phoenix.MonitorInterface
+
+	// pre-computed worker Id array. We can shuffle this for every enqueueJob call
+	workerIds	[]int
 
 	// From JobId -> task id -> allocated node monitor
 	//taskAllocationLock sync.Mutex
@@ -42,6 +46,12 @@ type TaskScheduler struct {
 }
 
 func NewTaskScheduler(addr string, monitorClientPool map[int]phoenix.MonitorInterface) phoenix.TaskSchedulerInterface {
+
+	workerIds := make([]int, 0)
+	for i := 0; i < len(monitorClientPool); i++ {
+		workerIds = append(workerIds, i)
+	}
+
 	return &TaskScheduler{
 		MonitorClientPool: monitorClientPool,
 		jobStatusLock:     sync.Mutex{},
@@ -52,12 +62,17 @@ func NewTaskScheduler(addr string, monitorClientPool map[int]phoenix.MonitorInte
 		taskToJobLock:     sync.Mutex{},
 		taskToJob:         make(map[string]string),
 		Addr:              addr,
+
+		// pre-computed list of all workerIds
+		workerIds: 		   workerIds,
 	}
 }
 
 var _ phoenix.TaskSchedulerInterface = new(TaskScheduler)
 
 func (ts *TaskScheduler) SubmitJob(job types.Job, submitResult *bool) error {
+
+	fmt.Printf("[Scheduler: SubmitJob]: Scheduling Job %s with %d\n", job.Id, len(job.Tasks))
 
 	enqueueCount := len(job.Tasks) * DefaultSampleRatio
 	ts.jobMapLock.Lock()
@@ -149,6 +164,7 @@ func (ts *TaskScheduler) TaskComplete(taskId string, completeResult *bool) error
 
 	// Clean things up when the job is finished
 	if leftJob == 0 {
+		fmt.Printf("[Scheduler: TaskComplete]: Job %s finished\n", jobId)
 		// Only nested lock here. Other place don't have nested lock to avoid deadlock
 		ts.jobStatusLock.Lock()
 		ts.jobMapLock.Lock()
@@ -175,9 +191,9 @@ func (ts *TaskScheduler) TaskComplete(taskId string, completeResult *bool) error
 }
 
 func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
-	nodesToEnqueue := ts.selectEnqueueWorker(enqueueCount)
+	//nodesToEnqueue := ts.selectEnqueueWorker(enqueueCount)
 
-	probeNodesList := MapToList(nodesToEnqueue)
+	probeNodesList := ts.selectEnqueueWorker(enqueueCount)
 	targetIndex := 0
 
 	for enqueueCount > 0 {
@@ -188,7 +204,12 @@ func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
 		queuePos := 0
 
 		targetWorkerId := probeNodesList[targetIndex%len(probeNodesList)]
-		_ = ts.MonitorClientPool[targetWorkerId].EnqueueReservation(taskR, &queuePos)
+		if e := ts.MonitorClientPool[targetWorkerId].EnqueueReservation(taskR, &queuePos); e != nil {
+			fmt.Printf("[TaskScheduler: enqueueJob]: Failed to enqueue reservation on %d\n", targetWorkerId)
+		}
+
+		fmt.Printf("[TaskScheduler: enqueueJob]: Enqueuing reservation on monitor %d for job reservation %s\n",
+			targetWorkerId, taskR.JobID)
 
 		// if e != nil {
 		// 	// Remove the inactive back
@@ -203,29 +224,21 @@ func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
 	return nil
 }
 
-func (ts *TaskScheduler) selectEnqueueWorker(probeCount int) map[int]bool {
+func (ts *TaskScheduler) selectEnqueueWorker(probeCount int) []int {
 
-	probeNodes := make(map[int]bool)
+	probeNodesList := make([]int,0)
 
-	for probeCount > 0 {
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(ts.workerIds), func (i, j int) {
+		ts.workerIds[i], ts.workerIds[j] = ts.workerIds[j], ts.workerIds[i]
+	})
 
-		targetWorkerId := rand.Int() % len(ts.MonitorClientPool)
-
-		// 		if _, found := probeNodes[targetWorkerId]; found {
-		// 			continue
-		// 		}
-
-		//var _ignore, queueLength int
-		//e := ts.MonitorClientPool[targetWorkerId].Probe(_ignore, &queueLength)
-		//if e != nil {
-		//	continue
-		//}
-
-		probeNodes[targetWorkerId] = true
-		probeCount--
+	for i := 0; i < probeCount; i++ {
+		targetWorkerId := ts.workerIds[i % len(ts.MonitorClientPool)]
+		probeNodesList = append(probeNodesList, targetWorkerId)
 	}
 
-	return probeNodes
+	return probeNodesList
 }
 
 func MapToList(nodeMap map[int]bool) (resultList []int) {

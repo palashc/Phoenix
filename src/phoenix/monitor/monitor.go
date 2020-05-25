@@ -47,12 +47,16 @@ func (nm *NodeMonitor) EnqueueReservation(taskReservation types.TaskReservation,
 	defer nm.lock.Unlock()
 
 	if nm.activeTasks < NUM_SLOTS {
+		fmt.Printf("[Monitor: EnqueueReservation]: about to launch task reservation for job: %s\n",
+			taskReservation.JobID)
 		err := nm.getAndLaunchTask(taskReservation)
 		if err != nil {
 			return err
 		}
 		nm.activeTasks++
 	} else {
+		fmt.Printf("[Monitor: EnqueueReservation]: adding task reservation for job: %s to queue\n",
+			taskReservation.JobID)
 		nm.queue.Enqueue(taskReservation)
 		*position = nm.queue.Len()
 	}
@@ -84,6 +88,8 @@ func (nm *NodeMonitor) TaskComplete(taskID string, ret *bool) error {
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
 
+	fmt.Printf("[Monitor: TaskComplete]: task %s marked as complete\n", taskID)
+
 	//get the scheduler for the task
 	schedulerAddr, ok := nm.taskSchedulerMap[taskID]
 
@@ -109,6 +115,8 @@ func (nm *NodeMonitor) TaskComplete(taskID string, ret *bool) error {
 	nm.activeTasks--
 
 	// launch next task from the queue
+
+	fmt.Println("[Monitor: TaskComplete] About to attempt launch task")
 	go nm.attemptLaunchTask()
 
 	*ret = true
@@ -174,29 +182,27 @@ Blocks till a reservation is present in the queue, and then launches it.
 */
 func (nm *NodeMonitor) attemptLaunchTask() {
 
-	var taskR types.TaskReservation
-	for {
-		nm.lock.Lock()
-		_taskR := nm.queue.Dequeue()
-		nm.lock.Unlock()
+	nm.lock.Lock()
+	_taskR := nm.queue.Dequeue()
+	nm.lock.Unlock()
 
-		//check if taskR has a reservation for a task which was not cancelled
-		if taskR, ok := _taskR.(types.TaskReservation); ok {
-			_, cancelled := nm.cancelled[taskR.JobID]
-			if !cancelled && taskR.IsNotEmpty() {
-				break
+	//check if taskR has a reservation for a task which was not cancelled
+	if taskR, ok := _taskR.(types.TaskReservation); ok {
+		fmt.Printf("[Monitor: attemptLaunchTask]: attempting %s\n", taskR.JobID)
+
+		_, cancelled := nm.cancelled[taskR.JobID]
+		if !cancelled && taskR.IsNotEmpty() {
+			fmt.Printf("[Monitor: attemptLaunchTask]: is not cancelled or empty: %s\n", taskR.JobID)
+			if taskR.IsNotEmpty() {
+				fmt.Printf("[Monitor: attemptLaunchTask]: launching %s\n", taskR.JobID)
+				// TODO: Parallelize with goroutines
+				err := nm.getAndLaunchTask(taskR)
+				if err != nil {
+					panic("Unable to launch next task")
+				}
+				nm.activeTasks++
 			}
 		}
-	}
-
-	nm.lock.Lock()
-	defer nm.lock.Unlock()
-	if taskR.IsNotEmpty() {
-		err := nm.getAndLaunchTask(taskR)
-		if err != nil {
-			panic("Unable to launch next task")
-		}
-		nm.activeTasks++
 	}
 
 }

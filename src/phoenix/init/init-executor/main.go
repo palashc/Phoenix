@@ -9,8 +9,6 @@ import (
 	"phoenix/monitor"
 )
 
-const DefaultSlotCount = 4
-
 var frc = flag.String("conf", config.DefaultConfigPath, "config file")
 
 func noError(e error) {
@@ -35,7 +33,7 @@ func main() {
 		monitorClient := monitor.GetNewClient(nodeMonitorAddr)
 
 		// default slot count = 4
-		eConfig := rc.NewExecutorConfig(i, executor.NewExecutor(i, DefaultSlotCount, monitorClient))
+		eConfig := rc.NewExecutorConfig(i, executor.NewExecutor(i, monitor.NUM_SLOTS, monitorClient))
 
 		log.Printf("executor serving on %s", eConfig.Addr)
 

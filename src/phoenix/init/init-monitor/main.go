@@ -11,8 +11,6 @@ import (
 	"phoenix/scheduler"
 )
 
-const DefaultSlotCount = 4
-
 var frc = flag.String("conf", config.DefaultConfigPath, "config file")
 
 func noError(e error) {
