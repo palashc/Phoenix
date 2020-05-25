@@ -2,15 +2,19 @@ package monitor
 
 import (
 	"fmt"
+
+	"github.com/golang-collections/collections/queue"
+
 	"phoenix"
 	"phoenix/executor"
 	"phoenix/types"
+
 	"sync"
 )
 
 type NodeMonitor struct {
 	activeTasks      int
-	queue            types.Queue
+	queue            queue.Queue
 	lock             sync.Mutex
 	executorAddr     string
 	schedulerAddrs   []string
