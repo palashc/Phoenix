@@ -93,12 +93,12 @@ func (nm *NodeMonitor) TaskComplete(taskID string, ret *bool) error {
 	}
 
 	//notify scheduler about task completion
-	schedulerClient, err := nm.getSchedulerClient(schedulerAddr)
-	if err != nil {
-		return fmt.Errorf("[Task Complete] Unable to get a scheduler client: %q", err)
+	schedulerClient, ok := nm.schedulerClients[schedulerAddr]
+	if !ok {
+		return fmt.Errorf("[Task Complete] Unable to get a scheduler client")
 	}
 	var succ bool
-	err = schedulerClient.TaskComplete(taskID, &succ)
+	err := schedulerClient.TaskComplete(taskID, &succ)
 	if err != nil {
 		return fmt.Errorf("[Task Complete] Unable to notify scheduler about task completion: %q", err)
 	}
@@ -137,14 +137,14 @@ Gets the task information from the scheduler for a reservation.
 func (nm *NodeMonitor) getTask(taskReservation types.TaskReservation) (types.Task, error) {
 
 	schedulerAddr := taskReservation.SchedulerAddr
-	schedulerClient, err := nm.getSchedulerClient(schedulerAddr)
-	if err != nil {
-		return types.Task{}, fmt.Errorf("[getTask] Unable to get a scheduler client: %q", err)
+	schedulerClient, ok := nm.schedulerClients[schedulerAddr]
+	if !ok {
+		return types.Task{}, fmt.Errorf("[getTask] Unable to get a scheduler client")
 	}
 	jobID := taskReservation.JobID
 
 	var task types.Task
-	err = schedulerClient.GetTask(jobID, &task)
+	err := schedulerClient.GetTask(jobID, &task)
 	if err != nil {
 		return types.Task{}, fmt.Errorf("[getTask] Unable to get task %v from scheduler %v : %q", jobID, schedulerAddr, err)
 	}
@@ -239,13 +239,6 @@ func (nm *NodeMonitor) refreshExecutorClient() error {
 	}
 
 	return nil
-}
-
-/*
-Returns the client for the scheduler rpc. Creates one if it is nil.
-*/
-func (nm *NodeMonitor) getSchedulerClient(addr string) (phoenix.TaskSchedulerInterface, error) {
-	return nm.schedulerClients[addr], nil
 }
 
 var _ phoenix.MonitorInterface = new(NodeMonitor)
