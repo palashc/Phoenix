@@ -90,11 +90,11 @@ func (ec *ECState) workerCoordinator() {
 		go func(id string) {
 			var succ bool
 			if err := ec.nmClient.TaskComplete(id, &succ); err != nil {
-				fmt.Errorf("[Executor: WorkerCoordinator]: Failed to invoke TaskComplete on TaskID: %s\n", id)
+				fmt.Errorf("[Executor: WorkerCoordinator]: Failed to invoke TaskComplete on TaskID: %s", id)
 			}
 
 			if !succ {
-				fmt.Errorf("[Executor: WorkerCoordinator]: Failed to invoke TaskComplete on TaskID: %s\n", id)
+				fmt.Errorf("[Executor: WorkerCoordinator]: Failed to invoke TaskComplete on TaskID: %s", id)
 			}
 		}(finishedTask.taskID)
 	}

@@ -23,8 +23,6 @@ func noError(e error) {
 func main() {
 	flag.Parse()
 
-	fmt.Errorf("Starting proto")
-
 	rc, e := config.LoadConfig(*frc)
 	noError(e)
 
