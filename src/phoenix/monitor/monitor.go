@@ -2,15 +2,19 @@ package monitor
 
 import (
 	"fmt"
+
+	"github.com/golang-collections/collections/queue"
+
 	"phoenix"
 	"phoenix/executor"
 	"phoenix/types"
+
 	"sync"
 )
 
 type NodeMonitor struct {
 	activeTasks      int
-	queue            types.Queue
+	queue            queue.Queue
 	lock             sync.Mutex
 	executorAddr     string
 	schedulerAddrs   []string
@@ -47,12 +51,16 @@ func (nm *NodeMonitor) EnqueueReservation(taskReservation types.TaskReservation,
 	defer nm.lock.Unlock()
 
 	if nm.activeTasks < NUM_SLOTS {
+		fmt.Printf("[Monitor: EnqueueReservation]: about to launch task reservation for job: %s\n",
+			taskReservation.JobID)
 		err := nm.getAndLaunchTask(taskReservation)
 		if err != nil {
 			return err
 		}
-		nm.activeTasks++
+		//nm.activeTasks++
 	} else {
+		fmt.Printf("[Monitor: EnqueueReservation]: adding task reservation for job: %s to queue\n",
+			taskReservation.JobID)
 		nm.queue.Enqueue(taskReservation)
 		*position = nm.queue.Len()
 	}
@@ -84,6 +92,8 @@ func (nm *NodeMonitor) TaskComplete(taskID string, ret *bool) error {
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
 
+	fmt.Printf("[Monitor: TaskComplete]: task %s marked as complete\n", taskID)
+
 	//get the scheduler for the task
 	schedulerAddr, ok := nm.taskSchedulerMap[taskID]
 
@@ -109,6 +119,8 @@ func (nm *NodeMonitor) TaskComplete(taskID string, ret *bool) error {
 	nm.activeTasks--
 
 	// launch next task from the queue
+
+	fmt.Println("[Monitor: TaskComplete] About to attempt launch task, active tasks: ", nm.activeTasks)
 	go nm.attemptLaunchTask()
 
 	*ret = true
@@ -155,8 +167,9 @@ func (nm *NodeMonitor) getTask(taskReservation types.TaskReservation) (types.Tas
 /*
 Launch a task on the application executor.
 */
-func (nm *NodeMonitor) launchTask(task types.Task) error {
+func (nm *NodeMonitor) launchTask(task types.Task, reservation types.TaskReservation) error {
 
+	fmt.Println("[Monitor: launchTask]: Now calling executor to launch ", task)
 	var ret bool
 	err := nm.executorClient.LaunchTask(task, &ret)
 	if err != nil {
@@ -166,6 +179,9 @@ func (nm *NodeMonitor) launchTask(task types.Task) error {
 		return fmt.Errorf("[LaunchTask] Unable to launch task, executor returned false")
 	}
 
+	nm.taskSchedulerMap[task.Id] = reservation.SchedulerAddr
+	nm.activeTasks++
+
 	return nil
 }
 
@@ -174,31 +190,27 @@ Blocks till a reservation is present in the queue, and then launches it.
 */
 func (nm *NodeMonitor) attemptLaunchTask() {
 
-	var taskR types.TaskReservation
-	for {
-		nm.lock.Lock()
-		_taskR := nm.queue.Dequeue()
-		nm.lock.Unlock()
+	nm.lock.Lock()
+	_taskR := nm.queue.Dequeue()
+	nm.lock.Unlock()
 
-		//check if taskR has a reservation for a task which was not cancelled
-		if taskR, ok := _taskR.(types.TaskReservation); ok {
-			_, cancelled := nm.cancelled[taskR.JobID]
-			if !cancelled && taskR.IsNotEmpty() {
-				break
+	//check if taskR has a reservation for a task which was not cancelled
+	if taskR, ok := _taskR.(types.TaskReservation); ok {
+		fmt.Printf("[Monitor: attemptLaunchTask]: attempting %s\n", taskR.JobID)
+
+		_, cancelled := nm.cancelled[taskR.JobID]
+		if !cancelled && taskR.IsNotEmpty() {
+			fmt.Printf("[Monitor: attemptLaunchTask]: is not cancelled or empty: %s\n", taskR.JobID)
+			if taskR.IsNotEmpty() {
+				fmt.Printf("[Monitor: attemptLaunchTask]: launching %s\n", taskR.JobID)
+				// TODO: Parallelize with goroutines
+				err := nm.getAndLaunchTask(taskR)
+				if err != nil {
+					panic("Unable to launch next task")
+				}
 			}
 		}
 	}
-
-	nm.lock.Lock()
-	defer nm.lock.Unlock()
-	if taskR.IsNotEmpty() {
-		err := nm.getAndLaunchTask(taskR)
-		if err != nil {
-			panic("Unable to launch next task")
-		}
-		nm.activeTasks++
-	}
-
 }
 
 /*
@@ -211,10 +223,10 @@ func (nm *NodeMonitor) getAndLaunchTask(taskReservation types.TaskReservation) e
 		return fmt.Errorf("[NM] Unable to get task %v from scheduler: %q", taskReservation.JobID, err)
 	}
 
-	nm.taskSchedulerMap[task.Id] = taskReservation.SchedulerAddr
+	fmt.Println("[Monitor getAndLaunchTask]: Task fetched", taskReservation, task)
 
 	if task.T > 0 {
-		err = nm.launchTask(task)
+		err = nm.launchTask(task, taskReservation)
 		if err != nil {
 			return fmt.Errorf("[NM] Unable to launch task %v on executor: %q", taskReservation.JobID, err)
 		}
