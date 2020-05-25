@@ -120,7 +120,7 @@ func (nm *NodeMonitor) TaskComplete(taskID string, ret *bool) error {
 
 	// launch next task from the queue
 
-	fmt.Println("[Monitor: TaskComplete] About to attempt launch task")
+	fmt.Println("[Monitor: TaskComplete] About to attempt launch task, active tasks: ", nm.activeTasks)
 	go nm.attemptLaunchTask()
 
 	*ret = true
@@ -204,7 +204,9 @@ func (nm *NodeMonitor) attemptLaunchTask() {
 				if err != nil {
 					panic("Unable to launch next task")
 				}
+				nm.lock.Lock()
 				nm.activeTasks++
+				nm.lock.Unlock()
 			}
 		}
 	}

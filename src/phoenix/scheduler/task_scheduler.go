@@ -25,7 +25,7 @@ type TaskScheduler struct {
 	MonitorClientPool map[int]phoenix.MonitorInterface
 
 	// pre-computed worker Id array. We can shuffle this for every enqueueJob call
-	workerIds	[]int
+	workerIds []int
 
 	// From JobId -> task id -> allocated node monitor
 	//taskAllocationLock sync.Mutex
@@ -64,7 +64,7 @@ func NewTaskScheduler(addr string, monitorClientPool map[int]phoenix.MonitorInte
 		Addr:              addr,
 
 		// pre-computed list of all workerIds
-		workerIds: 		   workerIds,
+		workerIds: workerIds,
 	}
 }
 
@@ -128,6 +128,7 @@ func (ts *TaskScheduler) GetTask(jobId string, task *types.Task) error {
 		*task = pendingTask
 		//TODO: Need to update in the future or change it to Assigned boolean value
 		taskRecord.AssignedWorker = 0
+		fmt.Println()
 		break
 		// TODO: Record which backend got assigned for this task
 		//ts.taskAllocationLock.Lock()
@@ -184,6 +185,13 @@ func (ts *TaskScheduler) TaskComplete(taskId string, completeResult *bool) error
 		ts.jobStatusLock.Unlock()
 
 		// TODO: Notify the corresponding frontend that the task is finished
+		fmt.Println("--------------------Finished job", jobId)
+		fmt.Println("jobStatus", ts.jobStatus)
+		fmt.Println("taskToJob", ts.taskToJob)
+		fmt.Println("jobLeftTask", ts.jobLeftTask)
+		fmt.Println("jobMap", ts.jobMap)
+		fmt.Println("-------------------", jobId)
+
 	}
 
 	*completeResult = true
@@ -226,15 +234,15 @@ func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
 
 func (ts *TaskScheduler) selectEnqueueWorker(probeCount int) []int {
 
-	probeNodesList := make([]int,0)
+	probeNodesList := make([]int, 0)
 
 	rand.Seed(time.Now().UnixNano())
-	rand.Shuffle(len(ts.workerIds), func (i, j int) {
+	rand.Shuffle(len(ts.workerIds), func(i, j int) {
 		ts.workerIds[i], ts.workerIds[j] = ts.workerIds[j], ts.workerIds[i]
 	})
 
 	for i := 0; i < probeCount; i++ {
-		targetWorkerId := ts.workerIds[i % len(ts.MonitorClientPool)]
+		targetWorkerId := ts.workerIds[i%len(ts.MonitorClientPool)]
 		probeNodesList = append(probeNodesList, targetWorkerId)
 	}
 
