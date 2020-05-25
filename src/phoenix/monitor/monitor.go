@@ -57,7 +57,7 @@ func (nm *NodeMonitor) EnqueueReservation(taskReservation types.TaskReservation,
 		if err != nil {
 			return err
 		}
-		nm.activeTasks++
+		//nm.activeTasks++
 	} else {
 		fmt.Printf("[Monitor: EnqueueReservation]: adding task reservation for job: %s to queue\n",
 			taskReservation.JobID)
@@ -167,7 +167,7 @@ func (nm *NodeMonitor) getTask(taskReservation types.TaskReservation) (types.Tas
 /*
 Launch a task on the application executor.
 */
-func (nm *NodeMonitor) launchTask(task types.Task) error {
+func (nm *NodeMonitor) launchTask(task types.Task, reservation types.TaskReservation) error {
 
 	fmt.Println("[Monitor: launchTask]: Now calling executor to launch ", task)
 	var ret bool
@@ -178,6 +178,9 @@ func (nm *NodeMonitor) launchTask(task types.Task) error {
 	if !ret {
 		return fmt.Errorf("[LaunchTask] Unable to launch task, executor returned false")
 	}
+
+	nm.taskSchedulerMap[task.Id] = reservation.SchedulerAddr
+	nm.activeTasks++
 
 	return nil
 }
@@ -223,12 +226,10 @@ func (nm *NodeMonitor) getAndLaunchTask(taskReservation types.TaskReservation) e
 	fmt.Println("[Monitor getAndLaunchTask]: Task fetched", taskReservation, task)
 
 	if task.T > 0 {
-		err = nm.launchTask(task)
+		err = nm.launchTask(task, taskReservation)
 		if err != nil {
 			return fmt.Errorf("[NM] Unable to launch task %v on executor: %q", taskReservation.JobID, err)
 		}
-		nm.taskSchedulerMap[task.Id] = taskReservation.SchedulerAddr
-		nm.activeTasks++
 	}
 
 	return nil
