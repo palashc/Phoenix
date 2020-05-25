@@ -34,7 +34,7 @@ func main() {
 	}
 
 	numTasks := 10
-	numJobs := 1
+	numJobs := 2
 	done := make(chan bool)
 
 	jobFn := func(jobN int, done chan bool) {
@@ -49,11 +49,11 @@ func main() {
 		job.Tasks = tasks
 		var ret bool
 		err := schedulerClientMap[sAddr].SubmitJob(job, &ret)
-		done <- ret
 		if err != nil {
 			fmt.Println(err)
 		}
 		fmt.Println("Submitted job ", jobid, ret)
+		done <- ret
 	}
 
 	for i := 0; i < numJobs; i++ {

@@ -5,9 +5,9 @@ package types
 type TaskID string
 
 type Task struct {
-	JobId 	string
-	Id  	string
-	T     	float32
+	JobId string
+	Id    string
+	T     float32
 }
 
 type TaskRecord struct {
@@ -28,4 +28,8 @@ type Job struct {
 type TaskReservation struct {
 	JobID         string
 	SchedulerAddr string
+}
+
+func (tr *TaskReservation) IsNotEmpty() bool {
+	return tr.JobID != "" && tr.SchedulerAddr != ""
 }

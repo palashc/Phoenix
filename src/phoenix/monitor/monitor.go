@@ -80,7 +80,7 @@ On a taskComplete() rpc from the executor, calla taskComplete on the scheduler.
 Also, attempt to run the next task from the queue.
 */
 func (nm *NodeMonitor) TaskComplete(taskID string, ret *bool) error {
-
+	//fmt.Println("task done ", taskID)
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
 
@@ -183,7 +183,7 @@ func (nm *NodeMonitor) attemptLaunchTask() {
 		//check if taskR has a reservation for a task which was not cancelled
 		if taskR, ok := _taskR.(types.TaskReservation); ok {
 			_, cancelled := nm.cancelled[taskR.JobID]
-			if !cancelled {
+			if !cancelled && taskR.IsNotEmpty() {
 				break
 			}
 		}
@@ -191,12 +191,13 @@ func (nm *NodeMonitor) attemptLaunchTask() {
 
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
-
-	err := nm.getAndLaunchTask(taskR)
-	if err != nil {
-		panic("Unable to launch next task")
+	if taskR.IsNotEmpty() {
+		err := nm.getAndLaunchTask(taskR)
+		if err != nil {
+			panic("Unable to launch next task")
+		}
+		nm.activeTasks++
 	}
-	nm.activeTasks++
 
 }
 

@@ -130,7 +130,7 @@ func (ts *TaskScheduler) GetTask(jobId string, task *types.Task) error {
 }
 
 func (ts *TaskScheduler) TaskComplete(taskId string, completeResult *bool) error {
-
+	//fmt.Println("task complete ", taskId)
 	ts.taskToJobLock.Lock()
 	jobId, found := ts.taskToJob[taskId]
 	if !found {

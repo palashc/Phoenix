@@ -28,5 +28,6 @@ func Worker(workerID int, taskChan chan *types.Task, doneChan chan taskDone) {
 }
 
 func performTask(task *types.Task) {
+	//fmt.Println("task ", task.Id, " sleeping for ", task.T)
 	time.Sleep(time.Millisecond * time.Duration(task.T*1000))
 }
