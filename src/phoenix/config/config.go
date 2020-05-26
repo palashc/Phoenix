@@ -9,6 +9,12 @@ import (
 
 var DefaultConfigPath = "phoenix_config.conf"
 
+type FrontendConfig struct {
+	Addr 		string
+	Frontend	phoenix.FrontendInterface
+	Ready		chan<- bool
+}
+
 type ExecutorConfig struct {
 	Addr     string
 	Executor phoenix.ExecutorInterface
@@ -28,24 +34,33 @@ type TaskSchedulerConfig struct {
 }
 
 type PhoenixConfig struct {
+	Frontends  []string
 	Schedulers []string
 	Monitors   []string
 	Executors  []string
+}
+
+func (pc *PhoenixConfig) NewFrontendConfig(i int, fe phoenix.FrontendInterface) *FrontendConfig {
+	return &FrontendConfig{
+		Addr: 		pc.Frontends[i],
+		Frontend: 	fe,
+		Ready: 		make(chan bool),
+	}
 }
 
 func (pc *PhoenixConfig) NewTaskSchedulerConfig(i int, ts phoenix.TaskSchedulerInterface) *TaskSchedulerConfig {
 	return &TaskSchedulerConfig{
 		Addr:          pc.Schedulers[i],
 		TaskScheduler: ts,
-		Ready:         make(chan bool, 1),
+		Ready:         make(chan bool),
 	}
 }
 
 func (pc *PhoenixConfig) NewMonitorConfig(i int, nm phoenix.MonitorInterface) *MonitorConfig {
-	ret := new(MonitorConfig)
-	ret.Addr = pc.Monitors[i]
-	ret.Monitor = nm
-	ret.Ready = make(chan bool, 1)
+	ret := 			new(MonitorConfig)
+	ret.Addr = 		pc.Monitors[i]
+	ret.Monitor = 	nm
+	ret.Ready = 	make(chan bool)
 	return ret
 }
 
@@ -53,7 +68,7 @@ func (pc *PhoenixConfig) NewExecutorConfig(i int, ec phoenix.ExecutorInterface) 
 	return &ExecutorConfig{
 		Addr:     pc.Executors[i],
 		Executor: ec,
-		Ready:    make(chan bool, 1),
+		Ready:    make(chan bool),
 	}
 }
 

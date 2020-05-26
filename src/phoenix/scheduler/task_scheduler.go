@@ -128,7 +128,7 @@ func (ts *TaskScheduler) GetTask(jobId string, task *types.Task) error {
 		*task = pendingTask
 		//TODO: Need to update in the future or change it to Assigned boolean value
 		taskRecord.AssignedWorker = 0
-		fmt.Println()
+		// fmt.Println()
 		break
 		// TODO: Record which backend got assigned for this task
 		//ts.taskAllocationLock.Lock()
