@@ -76,7 +76,6 @@ func (nm *NodeMonitor) Probe(_ignore int, n *int) error {
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
 
-	//TODO: subtract length of `cancelled` map?
 	*n = nm.queue.Len() - len(nm.cancelled)
 	return nil
 }
@@ -175,13 +174,9 @@ func (nm *NodeMonitor) launchTask(task types.Task, reservation types.TaskReserva
 		return fmt.Errorf("[LaunchTask] Unable to launch task, executor returned false")
 	}
 
-	//nm.lock.Lock()
 	nm.taskSchedulerMap[task.Id] = reservation.SchedulerAddr
-	//nm.lock.Unlock()
 
-	//nm.lock.Lock()
 	nm.activeTasks++
-	//nm.lock.Unlock()
 
 	return nil
 }
