@@ -58,9 +58,7 @@ func (nm *NodeMonitor) EnqueueReservation(taskReservation types.TaskReservation,
 	fmt.Printf("[Monitor: EnqueueReservation]: adding task reservation for job: %s to queue\n",
 		taskReservation.JobID)
 
-	nm.launchCond.L.Lock()
 	nm.queue.Enqueue(taskReservation)
-	nm.launchCond.L.Unlock()
 	nm.launchCond.Signal()
 
 	*position = nm.queue.Len()
@@ -116,9 +114,7 @@ func (nm *NodeMonitor) TaskComplete(taskID string, ret *bool) error {
 		return fmt.Errorf("[Task Complete] Unable to notify scheduler about task completion")
 	}
 
-	nm.launchCond.L.Lock()
 	nm.activeTasks--
-	nm.launchCond.L.Unlock()
 	nm.launchCond.Signal()
 
 	*ret = true
@@ -166,6 +162,8 @@ func (nm *NodeMonitor) getTask(taskReservation types.TaskReservation) (types.Tas
 Launch a task on the application executor.
 */
 func (nm *NodeMonitor) launchTask(task types.Task, reservation types.TaskReservation) error {
+	nm.lock.Lock()
+	defer nm.lock.Unlock()
 
 	fmt.Println("[Monitor: launchTask]: Now calling executor to launch ", task)
 	var ret bool
@@ -177,13 +175,13 @@ func (nm *NodeMonitor) launchTask(task types.Task, reservation types.TaskReserva
 		return fmt.Errorf("[LaunchTask] Unable to launch task, executor returned false")
 	}
 
-	nm.lock.Lock()
+	//nm.lock.Lock()
 	nm.taskSchedulerMap[task.Id] = reservation.SchedulerAddr
-	nm.lock.Unlock()
+	//nm.lock.Unlock()
 
-	nm.launchCond.L.Lock()
+	//nm.lock.Lock()
 	nm.activeTasks++
-	nm.launchCond.L.Unlock()
+	//nm.lock.Unlock()
 
 	return nil
 }
@@ -241,17 +239,18 @@ Task Launcher: polls the queue and launches task if a slot is ready
 */
 func (nm *NodeMonitor) taskLauncher() {
 
-	nm.launchCond.L.Lock()
-	for nm.activeTasks >= NUM_SLOTS || nm.queue.Len() == 0 {
-		nm.launchCond.Wait()
+	for {
+		nm.launchCond.L.Lock()
+		for nm.activeTasks >= NUM_SLOTS || nm.queue.Len() == 0 {
+			nm.launchCond.Wait()
+		}
+
+		fmt.Println("[Monitor: TaskLauncher] About to attempt launch task, active tasks: ", nm.activeTasks)
+		fmt.Println("[Monitor: TaskLauncher] queueSize: ", nm.queue.Len())
+		nm.attemptLaunchTask()
+
+		nm.launchCond.L.Unlock()
 	}
-
-	fmt.Println("[Monitor: TaskLauncher] About to attempt launch task, active tasks: ", nm.activeTasks)
-	fmt.Println("[Monitor: TaskLauncher] queueSize: ", nm.queue.Len())
-	nm.attemptLaunchTask()
-
-	nm.launchCond.L.Unlock()
-
 }
 
 var _ phoenix.MonitorInterface = new(NodeMonitor)
