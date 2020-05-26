@@ -72,7 +72,7 @@ var _ phoenix.TaskSchedulerInterface = new(TaskScheduler)
 
 func (ts *TaskScheduler) SubmitJob(job types.Job, submitResult *bool) error {
 
-	fmt.Printf("[Scheduler: SubmitJob]: Scheduling Job %s with %d\n", job.Id, len(job.Tasks))
+	fmt.Printf("[TaskScheduler %s: SubmitJob]: Scheduling Job %s with %d\n", ts.Addr, job.Id, len(job.Tasks))
 
 	enqueueCount := len(job.Tasks) * DefaultSampleRatio
 	ts.jobMapLock.Lock()
@@ -165,7 +165,7 @@ func (ts *TaskScheduler) TaskComplete(taskId string, completeResult *bool) error
 
 	// Clean things up when the job is finished
 	if leftJob == 0 {
-		fmt.Printf("[Scheduler: TaskComplete]: Job %s finished\n", jobId)
+		fmt.Printf("[TaskScheduler %s: TaskComplete]: Job %s finished\n", ts.Addr, jobId)
 		// Only nested lock here. Other place don't have nested lock to avoid deadlock
 		ts.jobStatusLock.Lock()
 		ts.jobMapLock.Lock()
@@ -213,11 +213,12 @@ func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
 
 		targetWorkerId := probeNodesList[targetIndex%len(probeNodesList)]
 		if e := ts.MonitorClientPool[targetWorkerId].EnqueueReservation(taskR, &queuePos); e != nil {
-			fmt.Printf("[TaskScheduler: enqueueJob]: Failed to enqueue reservation on %d\n", targetWorkerId)
+			fmt.Printf("[TaskScheduler %s: enqueueJob]: Failed to enqueue reservation on %d\n",
+				ts.Addr, targetWorkerId)
 		}
 
-		fmt.Printf("[TaskScheduler: enqueueJob]: Enqueuing reservation on monitor %d for job reservation %s\n",
-			targetWorkerId, taskR.JobID)
+		fmt.Printf("[TaskScheduler %s: enqueueJob]: Enqueuing reservation on monitor %d for job reservation %s\n",
+			ts.Addr, targetWorkerId, taskR.JobID)
 
 		// if e != nil {
 		// 	// Remove the inactive back

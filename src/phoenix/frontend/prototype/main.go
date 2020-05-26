@@ -34,8 +34,8 @@ func main() {
 		schedulerClientMap[schedulerAddr] = newSched
 	}
 
-	numTasks := 20
-	numJobs := 10
+	numTasks := 1
+	numJobs := 2
 	done := make(chan bool)
 
 	runJob := func(jobN int, done chan bool, sched phoenix.TaskSchedulerInterface) {
