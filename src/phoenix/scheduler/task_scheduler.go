@@ -185,12 +185,12 @@ func (ts *TaskScheduler) TaskComplete(taskId string, completeResult *bool) error
 		ts.jobStatusLock.Unlock()
 
 		// TODO: Notify the corresponding frontend that the task is finished
-		fmt.Println("--------------------Finished job", jobId)
-		fmt.Println("jobStatus", ts.jobStatus)
-		fmt.Println("taskToJob", ts.taskToJob)
-		fmt.Println("jobLeftTask", ts.jobLeftTask)
-		fmt.Println("jobMap", ts.jobMap)
-		fmt.Println("-------------------", jobId)
+		// fmt.Println("--------------------Finished job", jobId)
+		// fmt.Println("jobStatus", ts.jobStatus)
+		// fmt.Println("taskToJob", ts.taskToJob)
+		// fmt.Println("jobLeftTask", ts.jobLeftTask)
+		// fmt.Println("jobMap", ts.jobMap)
+		// fmt.Println("-------------------", jobId)
 
 	}
 

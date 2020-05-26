@@ -27,19 +27,21 @@ func main() {
 	noError(e)
 
 	schedulerClientMap := make(map[string]phoenix.TaskSchedulerInterface)
-	var sAddr string
+	schedulerArr := make([]phoenix.TaskSchedulerInterface,0)
 	for _, schedulerAddr := range rc.Schedulers {
-		sAddr = schedulerAddr
-		schedulerClientMap[schedulerAddr] = scheduler.GetNewTaskSchedulerClient(schedulerAddr)
+		newSched := scheduler.GetNewTaskSchedulerClient(schedulerAddr)
+		schedulerArr = append(schedulerArr, newSched)
+		schedulerClientMap[schedulerAddr] = newSched
 	}
 
 	numTasks := 20
 	numJobs := 10
 	done := make(chan bool)
 
-	jobFn := func(jobN int, done chan bool) {
+	runJob := func(jobN int, done chan bool, sched phoenix.TaskSchedulerInterface) {
 		jobid := "job" + strconv.Itoa(jobN)
 		job := types.Job{Id: jobid}
+
 		tasks := []types.Task{}
 		for j := 0; j < numTasks; j++ {
 			taskid := jobid + "-task" + strconv.Itoa(j)
@@ -48,8 +50,7 @@ func main() {
 		}
 		job.Tasks = tasks
 		var ret bool
-		err := schedulerClientMap[sAddr].SubmitJob(job, &ret)
-		if err != nil {
+		if err := sched.SubmitJob(job, &ret); err != nil {
 			fmt.Println(err)
 		}
 		fmt.Println("Submitted job ", jobid, ret)
@@ -57,7 +58,8 @@ func main() {
 	}
 
 	for i := 0; i < numJobs; i++ {
-		go jobFn(i, done)
+		sched := schedulerArr[i % len(schedulerArr)]
+		go runJob(i, done, sched)
 	}
 
 	for i := 0; i < numJobs; i++ {
