@@ -6,7 +6,6 @@ import (
 	"github.com/golang-collections/collections/queue"
 
 	"phoenix"
-	"phoenix/executor"
 	"phoenix/types"
 
 	"sync"
@@ -23,19 +22,25 @@ type NodeMonitor struct {
 	cancelled        map[string]bool
 	taskSchedulerMap map[string]string
 	jobSchedulerMap  map[string]string
+	launchCond       *sync.Cond
 }
 
 const NUM_SLOTS = 4
 
 func NewNodeMonitor(executorClient phoenix.ExecutorInterface, schedulers map[string]phoenix.TaskSchedulerInterface) *NodeMonitor {
 
-	return &NodeMonitor{
+	nm := &NodeMonitor{
 		cancelled:        make(map[string]bool),
 		taskSchedulerMap: make(map[string]string),
 		jobSchedulerMap:  make(map[string]string),
 		schedulerClients: schedulers,
 		executorClient:   executorClient,
+		launchCond:       sync.NewCond(&sync.Mutex{}),
 	}
+
+	go nm.taskLauncher()
+
+	return nm
 }
 
 /* -------------------------- APIs exposed by NM ------------------------*/
@@ -50,20 +55,13 @@ func (nm *NodeMonitor) EnqueueReservation(taskReservation types.TaskReservation,
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
 
-	if nm.activeTasks < NUM_SLOTS {
-		fmt.Printf("[Monitor: EnqueueReservation]: about to launch task reservation for job: %s\n",
-			taskReservation.JobID)
-		err := nm.getAndLaunchTask(taskReservation)
-		if err != nil {
-			return err
-		}
-		//nm.activeTasks++
-	} else {
-		fmt.Printf("[Monitor: EnqueueReservation]: adding task reservation for job: %s to queue\n",
-			taskReservation.JobID)
-		nm.queue.Enqueue(taskReservation)
-		*position = nm.queue.Len()
-	}
+	fmt.Printf("[Monitor: EnqueueReservation]: adding task reservation for job: %s to queue\n",
+		taskReservation.JobID)
+
+	nm.queue.Enqueue(taskReservation)
+	nm.launchCond.Signal()
+
+	*position = nm.queue.Len()
 
 	nm.taskSchedulerMap[taskReservation.JobID] = taskReservation.SchedulerAddr
 	return nil
@@ -117,11 +115,7 @@ func (nm *NodeMonitor) TaskComplete(taskID string, ret *bool) error {
 	}
 
 	nm.activeTasks--
-
-	// launch next task from the queue
-
-	fmt.Println("[Monitor: TaskComplete] About to attempt launch task, active tasks: ", nm.activeTasks)
-	go nm.attemptLaunchTask()
+	nm.launchCond.Signal()
 
 	*ret = true
 	return nil
@@ -168,6 +162,8 @@ func (nm *NodeMonitor) getTask(taskReservation types.TaskReservation) (types.Tas
 Launch a task on the application executor.
 */
 func (nm *NodeMonitor) launchTask(task types.Task, reservation types.TaskReservation) error {
+	nm.lock.Lock()
+	defer nm.lock.Unlock()
 
 	fmt.Println("[Monitor: launchTask]: Now calling executor to launch ", task)
 	var ret bool
@@ -179,8 +175,13 @@ func (nm *NodeMonitor) launchTask(task types.Task, reservation types.TaskReserva
 		return fmt.Errorf("[LaunchTask] Unable to launch task, executor returned false")
 	}
 
+	//nm.lock.Lock()
 	nm.taskSchedulerMap[task.Id] = reservation.SchedulerAddr
+	//nm.lock.Unlock()
+
+	//nm.lock.Lock()
 	nm.activeTasks++
+	//nm.lock.Unlock()
 
 	return nil
 }
@@ -190,9 +191,7 @@ Blocks till a reservation is present in the queue, and then launches it.
 */
 func (nm *NodeMonitor) attemptLaunchTask() {
 
-	nm.lock.Lock()
 	_taskR := nm.queue.Dequeue()
-	nm.lock.Unlock()
 
 	//check if taskR has a reservation for a task which was not cancelled
 	if taskR, ok := _taskR.(types.TaskReservation); ok {
@@ -236,22 +235,22 @@ func (nm *NodeMonitor) getAndLaunchTask(taskReservation types.TaskReservation) e
 }
 
 /*
-Returns the client for the executor rpc. Creates one if it is nil.
+Task Launcher: polls the queue and launches task if a slot is ready
 */
-func (nm *NodeMonitor) refreshExecutorClient() error {
+func (nm *NodeMonitor) taskLauncher() {
 
-	nm.lock.Lock()
-	defer nm.lock.Unlock()
-
-	if nm.executorClient == nil {
-		executorClient := executor.GetNewClient(nm.executorAddr)
-		if executorClient != nil {
-			return fmt.Errorf("[RefreshExecutor] Could not instantiate executor client")
+	for {
+		nm.launchCond.L.Lock()
+		for nm.activeTasks >= NUM_SLOTS || nm.queue.Len() == 0 {
+			nm.launchCond.Wait()
 		}
-		nm.executorClient = executorClient
-	}
 
-	return nil
+		fmt.Println("[Monitor: TaskLauncher] About to attempt launch task, active tasks: ", nm.activeTasks)
+		fmt.Println("[Monitor: TaskLauncher] queueSize: ", nm.queue.Len())
+		nm.attemptLaunchTask()
+
+		nm.launchCond.L.Unlock()
+	}
 }
 
 var _ phoenix.MonitorInterface = new(NodeMonitor)

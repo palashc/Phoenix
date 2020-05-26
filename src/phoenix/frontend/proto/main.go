@@ -33,7 +33,7 @@ func main() {
 		schedulerClientMap[schedulerAddr] = scheduler.GetNewTaskSchedulerClient(schedulerAddr)
 	}
 
-	numTasks := 1
+	numTasks := 20
 	numJobs := 10
 	done := make(chan bool)
 
