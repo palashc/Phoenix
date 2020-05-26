@@ -13,6 +13,7 @@ var (
 	ips         = flag.String("ips", "localhost", "comma-seperated list of IP addresses of the set of machines that'll host monitors and schedulers")
 	nMonitors   = flag.Int("nm", 1, "number of monitors")
 	nSchedulers = flag.Int("ns", 1, "number of scheduler")
+	nFrontends  = flag.Int("nf", 1, "number of frontends")
 	deflt       = flag.Bool("default", false, "default setup of 4 monitors and 2 schedulers")
 	frc         = flag.String("config", config.DefaultConfigPath, "bin storage config file")
 )
@@ -28,6 +29,7 @@ func main() {
 	p := randaddr.RandPort()
 
 	phoenixConfig := new(config.PhoenixConfig)
+	phoenixConfig.Frontends = make([]string, *nFrontends)
 	phoenixConfig.Schedulers = make([]string, *nSchedulers)
 	phoenixConfig.Monitors = make([]string, *nMonitors)
 
@@ -48,6 +50,12 @@ func main() {
 
 			// run Executors on same machine as monitors
 			phoenixConfig.Executors[i] = fmt.Sprintf("%s:%d", host, p+1000)
+			p++
+		}
+
+		for i := 0; i < *nFrontends; i++ {
+			host := fmt.Sprintf("%s", ipAddrs[i%nMachine])
+			phoenixConfig.Frontends[i] = fmt.Sprintf("%s:%d", host, p)
 			p++
 		}
 	}
