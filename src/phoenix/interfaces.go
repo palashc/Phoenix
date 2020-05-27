@@ -4,6 +4,11 @@ import (
 	"phoenix/types"
 )
 
+type FrontendInterface interface {
+
+	JobComplete(jobId string, ret *bool) error
+}
+
 // ExecutorServer interface that all executors must implement
 type ExecutorInterface interface {
 
@@ -25,7 +30,3 @@ type TaskSchedulerInterface interface {
 	TaskComplete(jobId string, completeResult *bool) error
 }
 
-// TODO: Might not necessary to have frontend
-type FrontEndInterface interface {
-	NotifyCompletion(job types.Job) error
-}

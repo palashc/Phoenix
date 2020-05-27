@@ -21,7 +21,7 @@ type TaskRecord struct {
 type Job struct {
 	Id        string
 	Tasks     []Task
-	ownerAddr string
+	OwnerAddr string
 }
 
 // Task Reservation for late-binding

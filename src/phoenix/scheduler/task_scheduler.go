@@ -24,6 +24,9 @@ type TaskScheduler struct {
 	// Monitors that we are able to contact
 	MonitorClientPool map[int]phoenix.MonitorInterface
 
+	// Frontend Client Pool
+	FrontendClientPool map[string]phoenix.FrontendInterface
+
 	// pre-computed worker Id array. We can shuffle this for every enqueueJob call
 	workerIds []int
 
@@ -45,7 +48,7 @@ type TaskScheduler struct {
 	//FrontEndClientPool map[int]
 }
 
-func NewTaskScheduler(addr string, monitorClientPool map[int]phoenix.MonitorInterface) phoenix.TaskSchedulerInterface {
+func NewTaskScheduler(addr string, monitorClientPool map[int]phoenix.MonitorInterface, frontendClientPool map[string]phoenix.FrontendInterface) phoenix.TaskSchedulerInterface {
 
 	workerIds := make([]int, 0)
 	for i := 0; i < len(monitorClientPool); i++ {
@@ -53,6 +56,7 @@ func NewTaskScheduler(addr string, monitorClientPool map[int]phoenix.MonitorInte
 	}
 
 	return &TaskScheduler{
+		FrontendClientPool: frontendClientPool,
 		MonitorClientPool: monitorClientPool,
 		jobStatusLock:     sync.Mutex{},
 		jobStatus:         make(map[string]map[string]*types.TaskRecord),
@@ -128,7 +132,7 @@ func (ts *TaskScheduler) GetTask(jobId string, task *types.Task) error {
 		*task = pendingTask
 		//TODO: Need to update in the future or change it to Assigned boolean value
 		taskRecord.AssignedWorker = 0
-		fmt.Println()
+		// fmt.Println()
 		break
 		// TODO: Record which backend got assigned for this task
 		//ts.taskAllocationLock.Lock()
@@ -178,6 +182,16 @@ func (ts *TaskScheduler) TaskComplete(taskId string, completeResult *bool) error
 			}
 		}
 
+		// Tell Frontend job has finished
+		go func (jId, feAddr string) {
+			var succ bool
+			if e := ts.FrontendClientPool[feAddr].JobComplete(jId, &succ); e != nil || !succ {
+			fmt.Printf("What's the error: %v\n", e)
+			fmt.Printf("[TaskScheduler: TaskComplete]: Error in telling frontend at %s that job %s has finished\n",
+						feAddr, jId)
+			}
+		}(jobId, ts.jobMap[jobId].OwnerAddr)
+
 		delete(ts.jobLeftTask, jobId)
 		delete(ts.jobStatus, jobId)
 		delete(ts.jobMap, jobId)
@@ -191,7 +205,6 @@ func (ts *TaskScheduler) TaskComplete(taskId string, completeResult *bool) error
 		// fmt.Println("jobLeftTask", ts.jobLeftTask)
 		// fmt.Println("jobMap", ts.jobMap)
 		// fmt.Println("-------------------", jobId)
-
 	}
 
 	*completeResult = true

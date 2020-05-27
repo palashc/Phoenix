@@ -23,11 +23,10 @@ type NodeMonitor struct {
 	taskSchedulerMap map[string]string
 	jobSchedulerMap  map[string]string
 	launchCond       *sync.Cond
+	slotCount		 int
 }
 
-const NUM_SLOTS = 4
-
-func NewNodeMonitor(executorClient phoenix.ExecutorInterface, schedulers map[string]phoenix.TaskSchedulerInterface) *NodeMonitor {
+func NewNodeMonitor(slotCount int, executorClient phoenix.ExecutorInterface, schedulers map[string]phoenix.TaskSchedulerInterface) *NodeMonitor {
 
 	nm := &NodeMonitor{
 		cancelled:        make(map[string]bool),
@@ -36,6 +35,7 @@ func NewNodeMonitor(executorClient phoenix.ExecutorInterface, schedulers map[str
 		schedulerClients: schedulers,
 		executorClient:   executorClient,
 		launchCond:       sync.NewCond(&sync.Mutex{}),
+		slotCount: slotCount,
 	}
 
 	go nm.taskLauncher()
@@ -55,8 +55,8 @@ func (nm *NodeMonitor) EnqueueReservation(taskReservation types.TaskReservation,
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
 
-	fmt.Printf("[Monitor: EnqueueReservation]: adding task reservation for job: %s to queue\n",
-		taskReservation.JobID)
+// fmt.Printf("[Monitor: EnqueueReservation]: adding task reservation for job: %s to queue\n",
+//		taskReservation.JobID)
 
 	nm.queue.Enqueue(taskReservation)
 	nm.launchCond.Signal()
@@ -89,7 +89,7 @@ func (nm *NodeMonitor) TaskComplete(taskID string, ret *bool) error {
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
 
-	fmt.Printf("[Monitor: TaskComplete]: task %s marked as complete\n", taskID)
+// fmt.Printf("[Monitor: TaskComplete]: task %s marked as complete\n", taskID)
 
 	//get the scheduler for the task
 	schedulerAddr, ok := nm.taskSchedulerMap[taskID]
@@ -164,7 +164,7 @@ func (nm *NodeMonitor) launchTask(task types.Task, reservation types.TaskReserva
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
 
-	fmt.Println("[Monitor: launchTask]: Now calling executor to launch ", task)
+// fmt.Println("[Monitor: launchTask]: Now calling executor to launch ", task)
 	var ret bool
 	err := nm.executorClient.LaunchTask(task, &ret)
 	if err != nil {
@@ -193,7 +193,7 @@ func (nm *NodeMonitor) attemptLaunchTask() {
 		_, cancelled := nm.cancelled[taskR.JobID]
 		if !cancelled && taskR.IsNotEmpty() {
 			if taskR.IsNotEmpty() {
-				fmt.Printf("[Monitor: attemptLaunchTask]: launching %s\n", taskR.JobID)
+			// fmt.Printf("[Monitor: attemptLaunchTask]: launching %s\n", taskR.JobID)
 				// TODO: Parallelize with goroutines
 				err := nm.getAndLaunchTask(taskR)
 				if err != nil {
@@ -214,7 +214,7 @@ func (nm *NodeMonitor) getAndLaunchTask(taskReservation types.TaskReservation) e
 		return fmt.Errorf("[NM] Unable to get task %v from scheduler: %q", taskReservation.JobID, err)
 	}
 
-	fmt.Println("[Monitor getAndLaunchTask]: Task fetched", taskReservation, task)
+// fmt.Println("[Monitor getAndLaunchTask]: Task fetched", taskReservation, task)
 
 	if task.T > 0 {
 		err = nm.launchTask(task, taskReservation)
@@ -233,12 +233,12 @@ func (nm *NodeMonitor) taskLauncher() {
 
 	for {
 		nm.launchCond.L.Lock()
-		for nm.activeTasks >= NUM_SLOTS || nm.queue.Len() == 0 {
+		for nm.activeTasks >= nm.slotCount || nm.queue.Len() == 0 {
 			nm.launchCond.Wait()
 		}
 
-		// fmt.Println("[Monitor: TaskLauncher] About to attempt launch task, active tasks: ", nm.activeTasks)
-		fmt.Println("[Monitor: TaskLauncher] queueSize before attemptLaunchTask: ", nm.queue.Len())
+	// fmt.Println("[Monitor: TaskLauncher] About to attempt launch task, active tasks: ", nm.activeTasks)
+	// fmt.Println("[Monitor: TaskLauncher] queueSize: ", nm.queue.Len())
 		nm.attemptLaunchTask()
 
 		nm.launchCond.L.Unlock()

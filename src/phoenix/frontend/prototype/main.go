@@ -7,9 +7,11 @@ import (
 	"math/rand"
 	"phoenix"
 	"phoenix/config"
+	"phoenix/frontend"
 	"phoenix/scheduler"
 	"phoenix/types"
 	"strconv"
+	"time"
 )
 
 var frc = flag.String("conf", config.DefaultConfigPath, "config file")
@@ -26,43 +28,93 @@ func main() {
 	rc, e := config.LoadConfig(*frc)
 	noError(e)
 
-	schedulerClientMap := make(map[string]phoenix.TaskSchedulerInterface)
-	schedulerArr := make([]phoenix.TaskSchedulerInterface,0)
+	fmt.Println("Parsed main")
+
+	schedulerClients := make([]phoenix.TaskSchedulerInterface, 0)
 	for _, schedulerAddr := range rc.Schedulers {
 		newSched := scheduler.GetNewTaskSchedulerClient(schedulerAddr)
-		schedulerArr = append(schedulerArr, newSched)
-		schedulerClientMap[schedulerAddr] = newSched
+		schedulerClients = append(schedulerClients, newSched)
 	}
 
-	numTasks := 1
-	numJobs := 2
-	done := make(chan bool)
+	// Only one frontend
+	feAddr := rc.Frontends[0]
+	jobDoneChan := make(chan string)
+	fe, sendJobsChan := frontend.NewFrontend(feAddr, schedulerClients, jobDoneChan)
 
-	runJob := func(jobN int, done chan bool, sched phoenix.TaskSchedulerInterface) {
-		jobid := "job" + strconv.Itoa(jobN)
-		job := types.Job{Id: jobid}
+	feConfig := rc.NewFrontendConfig(0, fe)
 
-		tasks := []types.Task{}
+	// run Frontend server
+	go frontend.ServeFrontend(feConfig)
+	<- feConfig.Ready
+
+	// TODO: randomize number of jobs or tasks
+	numTasks := 25
+	numJobs := 20
+
+	jobList := make([]*types.Job, 20)
+	var sumOfTaskTimes float32 = 0
+
+	// populate jobList
+	for i := 0; i < numJobs; i++ {
+		jobid := "job" + strconv.Itoa(i)
+		tasks := make([]types.Task, 0)
 		for j := 0; j < numTasks; j++ {
 			taskid := jobid + "-task" + strconv.Itoa(j)
-			task := types.Task{JobId: jobid, Id: taskid, T: rand.Float32()}
+
+			taskTime := rand.Float32()
+			sumOfTaskTimes += taskTime
+			task := types.Task{JobId: jobid, Id: taskid, T: taskTime}
+
 			tasks = append(tasks, task)
 		}
-		job.Tasks = tasks
-		var ret bool
-		if err := sched.SubmitJob(job, &ret); err != nil {
-			fmt.Println(err)
+
+		jobList[i] = &types.Job{
+			Id: jobid,
+			Tasks: tasks,
+
+			// TODO: Currently we only test with one frontend
+			OwnerAddr: feAddr,
 		}
-		fmt.Println("Submitted job ", jobid, ret)
-		done <- ret
 	}
 
+	// run jobs
+	startTime := time.Now()
 	for i := 0; i < numJobs; i++ {
-		sched := schedulerArr[i % len(schedulerArr)]
-		go runJob(i, done, sched)
+		// TODO: does using go routines here improve performance?
+		sendJobsChan <- jobList[i]
 	}
 
+	// wait for all jobs to end
 	for i := 0; i < numJobs; i++ {
-		<-done
+		<-jobDoneChan
 	}
+
+	timeTaken := float32(time.Since(startTime).Seconds())
+
+	slotCount := len(rc.Executors) * rc.NumSlots
+	theoreticalLowerBound := sumOfTaskTimes / float32(slotCount)
+
+	overhead := 100 * (timeTaken/theoreticalLowerBound - 1)
+
+	fmt.Printf("Complete time taken for test in seconds: %f\n", timeTaken)
+	fmt.Printf("Total time of jobs in seconds: %f\n", sumOfTaskTimes)
+	fmt.Printf("We are within %f percent of the theoretical lower bound\n", overhead)
+
+	writeToFile(rc, numJobs, numTasks, timeTaken, overhead)
+}
+
+func writeToFile(rc *config.PhoenixConfig, jobCount, taskCount int, timeTaken, overhead float32) error {
+	logName := strconv.Itoa(len(rc.Schedulers)) + "_sched:" + strconv.Itoa(len(rc.Monitors)) + "_mtor:" +
+		strconv.Itoa(rc.NumSlots) + "_slots" + strconv.Itoa(taskCount) + "_tasks.log"
+
+	fout, e := rc.Write(logName)
+
+	if e != nil {
+		return e
+	}
+
+	fout.WriteString(fmt.Sprintf("\njobCount: %d, taskCount: %d, timeTaken: %f, overhead percent: %f\n",
+		jobCount, taskCount, timeTaken, overhead))
+	fout.Close()
+	return nil
 }

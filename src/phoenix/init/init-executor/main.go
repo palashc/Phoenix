@@ -33,7 +33,7 @@ func main() {
 		monitorClient := monitor.GetNewClient(nodeMonitorAddr)
 
 		// default slot count = 4
-		eConfig := rc.NewExecutorConfig(i, executor.NewExecutor(i, monitor.NUM_SLOTS, monitorClient))
+		eConfig := rc.NewExecutorConfig(i, executor.NewExecutor(i, rc.NumSlots, monitorClient))
 
 		log.Printf("executor serving on %s", eConfig.Addr)
 
