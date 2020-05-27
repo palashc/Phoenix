@@ -1,0 +1,25 @@
+{
+    "NumSlots": 4,
+    "Frontends": [
+        "localhost:32730"
+    ],
+    "Schedulers": [
+        "localhost:32722",
+        "localhost:32723",
+        "localhost:32724",
+        "localhost:32725"
+    ],
+    "Monitors": [
+        "localhost:32726",
+        "localhost:32727",
+        "localhost:32728",
+        "localhost:32729"
+    ],
+    "Executors": [
+        "localhost:33726",
+        "localhost:33727",
+        "localhost:33728",
+        "localhost:33729"
+    ]
+}
+jobCount: 20, taskCount: 10, timeTaken: 6.641004, overhead percent: 11.806477

@@ -57,7 +57,7 @@ func (fe *Frontend) processJobs() {
 
 		fe.jobStatus[newJob.Id] = false
 
-		fmt.Printf("[Frontend: processJobs]: Submitting job %s\n", newJob.Id)
+		// fmt.Printf("[Frontend: processJobs]: Submitting job %s\n", newJob.Id)
 
 		var succ bool
 		if e := scheduler.SubmitJob(*newJob, &succ); e != nil || !succ {
@@ -74,7 +74,7 @@ func (fe *Frontend) selectRandScheduler() phoenix.TaskSchedulerInterface {
 
 func (fe *Frontend) JobComplete(jobId string, ret *bool) error {
 
-	fmt.Printf("[Frontend: JobComplete]: Job %s finished\n", jobId)
+	// fmt.Printf("[Frontend: JobComplete]: Job %s finished\n", jobId)
 
 	fe.lock.Lock()
 	defer fe.lock.Unlock()

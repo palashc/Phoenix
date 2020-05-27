@@ -34,6 +34,7 @@ type TaskSchedulerConfig struct {
 }
 
 type PhoenixConfig struct {
+	NumSlots   int
 	Frontends  []string
 	Schedulers []string
 	Monitors   []string
@@ -91,6 +92,21 @@ func (pc *PhoenixConfig) Save(p string) error {
 	}
 
 	return fout.Close()
+}
+func (pc *PhoenixConfig) Write(p string) (*os.File, error) {
+	b := pc.marshal()
+
+	fout, e := os.Create(p)
+	if e != nil {
+		return nil, e
+	}
+
+	_, e = fout.Write(b)
+	if e != nil {
+		return nil, e
+	}
+
+	return fout, nil
 }
 
 func (pc *PhoenixConfig) String() string {

@@ -75,8 +75,7 @@ func NewTaskScheduler(addr string, monitorClientPool map[int]phoenix.MonitorInte
 var _ phoenix.TaskSchedulerInterface = new(TaskScheduler)
 
 func (ts *TaskScheduler) SubmitJob(job types.Job, submitResult *bool) error {
-
-	fmt.Printf("[Scheduler: SubmitJob]: Scheduling Job %s with %d\n", job.Id, len(job.Tasks))
+// fmt.Printf("[Scheduler: SubmitJob]: Scheduling Job %s with %d\n", job.Id, len(job.Tasks))
 
 	enqueueCount := len(job.Tasks) * DefaultSampleRatio
 	ts.jobMapLock.Lock()
@@ -169,7 +168,7 @@ func (ts *TaskScheduler) TaskComplete(taskId string, completeResult *bool) error
 
 	// Clean things up when the job is finished
 	if leftJob == 0 {
-		fmt.Printf("[Scheduler: TaskComplete]: Job %s finished\n", jobId)
+ 		// fmt.Printf("[Scheduler: TaskComplete]: Job %s finished\n", jobId)
 		// Only nested lock here. Other place don't have nested lock to avoid deadlock
 		ts.jobStatusLock.Lock()
 		ts.jobMapLock.Lock()
@@ -186,9 +185,9 @@ func (ts *TaskScheduler) TaskComplete(taskId string, completeResult *bool) error
 		go func (jId, feAddr string) {
 			var succ bool
 			if e := ts.FrontendClientPool[feAddr].JobComplete(jId, &succ); e != nil || !succ {
-				fmt.Printf("What's the error: %v\n", e)
-				fmt.Printf("[TaskScheduler: TaskComplete]: Error in telling frontend at %s that job %s has finished\n",
-					feAddr, jId)
+			fmt.Printf("What's the error: %v\n", e)
+			fmt.Printf("[TaskScheduler: TaskComplete]: Error in telling frontend at %s that job %s has finished\n",
+						feAddr, jId)
 			}
 		}(jobId, ts.jobMap[jobId].OwnerAddr)
 
@@ -230,8 +229,8 @@ func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
 			fmt.Printf("[TaskScheduler: enqueueJob]: Failed to enqueue reservation on %d\n", targetWorkerId)
 		}
 
-		fmt.Printf("[TaskScheduler: enqueueJob]: Enqueuing reservation on monitor %d for job reservation %s\n",
-			targetWorkerId, taskR.JobID)
+		// fmt.Printf("[TaskScheduler: enqueueJob]: Enqueuing reservation on monitor %d for job reservation %s\n",
+		//		targetWorkerId, taskR.JobID)
 
 		// if e != nil {
 		// 	// Remove the inactive back

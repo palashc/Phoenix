@@ -8,7 +8,6 @@ import (
 	"phoenix"
 	"phoenix/config"
 	"phoenix/frontend"
-	"phoenix/monitor"
 	"phoenix/scheduler"
 	"phoenix/types"
 	"strconv"
@@ -49,7 +48,7 @@ func main() {
 	<- feConfig.Ready
 
 	// TODO: randomize number of jobs or tasks
-	numTasks := 50
+	numTasks := 25
 	numJobs := 20
 
 	jobList := make([]*types.Job, 20)
@@ -92,10 +91,30 @@ func main() {
 
 	timeTaken := float32(time.Since(startTime).Seconds())
 
-	slotCount := len(rc.Executors) * monitor.NUM_SLOTS
+	slotCount := len(rc.Executors) * rc.NumSlots
 	theoreticalLowerBound := sumOfTaskTimes / float32(slotCount)
+
+	overhead := 100 * (timeTaken/theoreticalLowerBound - 1)
 
 	fmt.Printf("Complete time taken for test in seconds: %f\n", timeTaken)
 	fmt.Printf("Total time of jobs in seconds: %f\n", sumOfTaskTimes)
-	fmt.Printf("We are within %f percent of the theoretical lower bound\n", 100 * (timeTaken/theoreticalLowerBound - 1))
+	fmt.Printf("We are within %f percent of the theoretical lower bound\n", overhead)
+
+	writeToFile(rc, numJobs, numTasks, timeTaken, overhead)
+}
+
+func writeToFile(rc *config.PhoenixConfig, jobCount, taskCount int, timeTaken, overhead float32) error {
+	logName := strconv.Itoa(len(rc.Schedulers)) + "_sched:" + strconv.Itoa(len(rc.Monitors)) + "_mtor:" +
+		strconv.Itoa(rc.NumSlots) + "_slots" + strconv.Itoa(taskCount) + "_tasks.log"
+
+	fout, e := rc.Write(logName)
+
+	if e != nil {
+		return e
+	}
+
+	fout.WriteString(fmt.Sprintf("\njobCount: %d, taskCount: %d, timeTaken: %f, overhead percent: %f\n",
+		jobCount, taskCount, timeTaken, overhead))
+	fout.Close()
+	return nil
 }
