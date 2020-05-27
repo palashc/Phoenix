@@ -8,6 +8,7 @@ import (
 	"phoenix"
 	"phoenix/config"
 	"phoenix/frontend"
+	"phoenix/monitor"
 	"phoenix/scheduler"
 	"phoenix/types"
 	"strconv"
@@ -28,6 +29,8 @@ func main() {
 	rc, e := config.LoadConfig(*frc)
 	noError(e)
 
+	fmt.Println("Parsed main")
+
 	schedulerClients := make([]phoenix.TaskSchedulerInterface, 0)
 	for _, schedulerAddr := range rc.Schedulers {
 		newSched := scheduler.GetNewTaskSchedulerClient(schedulerAddr)
@@ -42,7 +45,8 @@ func main() {
 	feConfig := rc.NewFrontendConfig(0, fe)
 
 	// run Frontend server
-	noError(frontend.ServeFrontend(feConfig))
+	go frontend.ServeFrontend(feConfig)
+	<- feConfig.Ready
 
 	// TODO: randomize number of jobs or tasks
 	numTasks := 50
@@ -68,6 +72,9 @@ func main() {
 		jobList[i] = &types.Job{
 			Id: jobid,
 			Tasks: tasks,
+
+			// TODO: Currently we only test with one frontend
+			OwnerAddr: feAddr,
 		}
 	}
 
@@ -82,8 +89,13 @@ func main() {
 	for i := 0; i < numJobs; i++ {
 		<-jobDoneChan
 	}
-	endTime := time.Now()
 
-	fmt.Printf("Complete time taken for test in nanoseconds: %d\n", endTime.UnixNano() - startTime.UnixNano())
+	timeTaken := float32(time.Since(startTime).Seconds())
+
+	slotCount := len(rc.Executors) * monitor.NUM_SLOTS
+	theoreticalLowerBound := sumOfTaskTimes / float32(slotCount)
+
+	fmt.Printf("Complete time taken for test in seconds: %f\n", timeTaken)
 	fmt.Printf("Total time of jobs in seconds: %f\n", sumOfTaskTimes)
+	fmt.Printf("We are within %f percent of the theoretical lower bound\n", 100 * (timeTaken/theoreticalLowerBound - 1))
 }
