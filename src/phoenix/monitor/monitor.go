@@ -190,11 +190,8 @@ func (nm *NodeMonitor) attemptLaunchTask() {
 
 	//check if taskR has a reservation for a task which was not cancelled
 	if taskR, ok := _taskR.(types.TaskReservation); ok {
-	// fmt.Printf("[Monitor: attemptLaunchTask]: attempting %s\n", taskR.JobID)
-
 		_, cancelled := nm.cancelled[taskR.JobID]
 		if !cancelled && taskR.IsNotEmpty() {
-		// fmt.Printf("[Monitor: attemptLaunchTask]: is not cancelled or empty: %s\n", taskR.JobID)
 			if taskR.IsNotEmpty() {
 			// fmt.Printf("[Monitor: attemptLaunchTask]: launching %s\n", taskR.JobID)
 				// TODO: Parallelize with goroutines
