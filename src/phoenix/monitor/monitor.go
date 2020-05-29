@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"fmt"
+	"path"
 
 	"phoenix"
 	"phoenix/types"
@@ -263,7 +264,7 @@ func (nm *NodeMonitor) registerMonitorZK(zkHostPorts []string) {
 	}
 
 	//Create ephemeral node
-	monitorPath := phoenix.ZK_WORKER_NODE_PATH + nm.addr
+	monitorPath := path.Join(phoenix.ZK_WORKER_NODE_PATH, nm.addr)
 	data := []byte(nm.addr)
 	acls := []zk.ACL{}
 	acl := zk.ACL{Perms: zk.PermAll, Scheme: "world", ID: "anyone"}
