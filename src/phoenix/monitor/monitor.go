@@ -27,6 +27,9 @@ type NodeMonitor struct {
 	jobSchedulerMap  map[string]string
 	launchCond       *sync.Cond
 	slotCount        int
+
+	// zookeeper connection
+	zkConn			*zk.Conn
 }
 
 func NewNodeMonitor(slotCount int, executorClient phoenix.ExecutorInterface,
@@ -257,24 +260,33 @@ Register this monitor on Zookeeper by creating an ephemeral ZNode.
 func (nm *NodeMonitor) registerMonitorZK(zkHostPorts []string) {
 
 	//connect to ZK
-	conn, _, err := zk.Connect(zkHostPorts, phoenix.ZK_MONITOR_CONNECTION_TIMEOUT)
+	var err error
+	nm.zkConn, _, err = zk.Connect(zkHostPorts, phoenix.ZK_MONITOR_CONNECTION_TIMEOUT)
 	if err != nil {
 		fmt.Println("[NodeMonitor: registerMonitorZK] Unable to connect to Zookeeper!")
 		panic(err)
 	}
 
+	workerNodeExists, _, err := nm.zkConn.Exists(phoenix.ZK_WORKER_NODE_PATH)
+	if ! workerNodeExists || err != nil {
+		_, e := nm.zkConn.Create(phoenix.ZK_WORKER_NODE_PATH, []byte{0}, 0, zk.WorldACL(zk.PermAll))
+		if e != nil {
+			fmt.Printf("Error: %v\n Could not create Worker Node Path node at %s\n", e, phoenix.ZK_WORKER_NODE_PATH)
+		}
+	}
+
+	workerNodeExists, _, err = nm.zkConn.Exists(phoenix.ZK_WORKER_NODE_PATH)
+	fmt.Printf("[monitor: registerMonitorZK]: %s exist? %v, err: %v\n",
+		phoenix.ZK_WORKER_NODE_PATH, workerNodeExists, err)
+
 	//Create ephemeral node
 	monitorPath := path.Join(phoenix.ZK_WORKER_NODE_PATH, nm.addr)
 	data := []byte(nm.addr)
-	acls := []zk.ACL{}
-	acl := zk.ACL{Perms: zk.PermAll, Scheme: "world", ID: "anyone"}
-	acls = append(acls, acl)
-	_, err = conn.Create(monitorPath, data, zk.FlagEphemeral, acls)
+	_, err = nm.zkConn.Create(monitorPath, data, zk.FlagEphemeral, zk.WorldACL(zk.PermAll))
 	if err != nil {
 		fmt.Println("[NodeMonitor: registerMonitorZK] Unable to create znode!")
 		panic(err)
 	}
-
 }
 
 var _ phoenix.MonitorInterface = new(NodeMonitor)

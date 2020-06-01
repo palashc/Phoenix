@@ -40,7 +40,9 @@ func main() {
 		executorClient := executor.GetNewClient(executorAddr)
 
 		// TODO: get a better newXXXConfig method
-		mConfig := rc.NewMonitorConfig(i, monitor.NewNodeMonitor(rc.NumSlots, executorClient, schedulerClientMap))
+		monitorAddr := rc.Monitors[i]
+		mConfig := rc.NewMonitorConfig(i, monitor.NewNodeMonitor(rc.NumSlots, executorClient, schedulerClientMap,
+			[]string{phoenix.ZK_LOCAL_SERVERS}, monitorAddr))
 
 		log.Printf("monitor serving on %s", mConfig.Addr)
 
