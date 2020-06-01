@@ -102,7 +102,7 @@ func (nm *NodeMonitor) TaskComplete(taskID string, ret *bool) error {
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
 
-	// fmt.Printf("[Monitor: TaskComplete]: task %s marked as complete\n", taskID)
+	fmt.Printf("[Monitor: TaskComplete]: task %s marked as complete\n", taskID)
 
 	//get the scheduler for the task
 	schedulerAddr, ok := nm.taskSchedulerMap[taskID]
@@ -260,10 +260,10 @@ func (nm *NodeMonitor) taskLauncher() {
 		nm.launchCond.L.Lock()
 		for nm.activeTasks >= nm.slotCount || nm.queue.Len() == 0 {
 			nm.launchCond.Wait()
-			fmt.Println("[Monitor: TaskLauncher] woke up from waiting, queue length: ", nm.queue.Len())
+			fmt.Println("[Monitor: TaskLauncher] woke up from waiting, queue length: ", nm.queue.Len(), nm.activeTasks)
 		}
 
-		// fmt.Println("[Monitor: TaskLauncher] About to attempt launch task, active tasks: ", nm.activeTasks)
+		fmt.Println("[Monitor: TaskLauncher] About to attempt launch task, active tasks: ", nm.activeTasks)
 		// fmt.Println("[Monitor: TaskLauncher] queueSize: ", nm.queue.Len())
 		nm.attemptLaunchTask()
 
