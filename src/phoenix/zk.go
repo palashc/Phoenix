@@ -5,5 +5,6 @@ import "time"
 const (
 	ZK_WORKER_NODE_PATH           = "/workers"
 	ZK_MONITOR_CONNECTION_TIMEOUT = 2 * time.Second
-	ZK_LOCAL_SERVERS = "localhost:2181"
 )
+
+var ZkLocalServers = []string{"localhost:2181"}

@@ -2,8 +2,10 @@ package scheduler
 
 import (
 	"fmt"
+	"github.com/samuel/go-zookeeper/zk"
 	"math/rand"
 	"phoenix"
+	"phoenix/monitor"
 	"phoenix/types"
 	"sync"
 	"time"
@@ -11,53 +13,54 @@ import (
 
 const DefaultSampleRatio = 2
 
-func MIN(i, j int) int {
-	if i < j {
-		return i
-	}
-	return j
-}
-
 type TaskScheduler struct {
 	Addr string
 
-	// Monitors that we are able to contact
-	MonitorClientPool map[int]phoenix.MonitorInterface
+	// map of addresses to Monitors that we are able to contact
+	MonitorClientPool 	map[string]phoenix.MonitorInterface
+
+	// addresses of our workers
+	workerIds 			[]string
+
+	// map of worker address to current tasks assigned to worker
+	workerIdToTask 		map[string]map[string]bool
+
+	// lock around MonitorClientPool, workerIds, and workerIdToTask
+	workerLock	sync.Mutex
 
 	// Frontend Client Pool
 	FrontendClientPool map[string]phoenix.FrontendInterface
-
-	// pre-computed worker Id array. We can shuffle this for every enqueueJob call
-	workerIds []int
-
-	// From JobId -> task id -> allocated node monitor
-	//taskAllocationLock sync.Mutex
-	//taskAllocation map[string]map[string]int
-
 	jobStatusLock sync.Mutex
+
+	// maps jobIds to a map of taskIds to TaskRecords
 	jobStatus     map[string]map[string]*types.TaskRecord
+
+	// tasks left in a job
 	jobLeftTask   map[string]int
 
 	jobMapLock sync.Mutex
+
+	// jobId to Job
 	jobMap     map[string]types.Job
 
 	taskToJobLock sync.Mutex
+
+	// taskId to JobId
 	taskToJob     map[string]string
 	// Pending, might have a 1-1 mapping from client to scheduler
 	// Front-ends that are able to communicate with this scheduler
 	//FrontEndClientPool map[int]
+
+	// zookeeper connection
+	zkConn 		*zk.Conn
 }
 
-func NewTaskScheduler(addr string, monitorClientPool map[int]phoenix.MonitorInterface, frontendClientPool map[string]phoenix.FrontendInterface) phoenix.TaskSchedulerInterface {
+var _ phoenix.TaskSchedulerInterface = new(TaskScheduler)
 
-	workerIds := make([]int, 0)
-	for i := 0; i < len(monitorClientPool); i++ {
-		workerIds = append(workerIds, i)
-	}
+func NewTaskScheduler(addr string, zkHostPorts []string, frontendClientPool map[string]phoenix.FrontendInterface) phoenix.TaskSchedulerInterface {
 
-	return &TaskScheduler{
+	ts := &TaskScheduler{
 		FrontendClientPool: frontendClientPool,
-		MonitorClientPool: monitorClientPool,
 		jobStatusLock:     sync.Mutex{},
 		jobStatus:         make(map[string]map[string]*types.TaskRecord),
 		jobLeftTask:       make(map[string]int),
@@ -67,12 +70,102 @@ func NewTaskScheduler(addr string, monitorClientPool map[int]phoenix.MonitorInte
 		taskToJob:         make(map[string]string),
 		Addr:              addr,
 
-		// pre-computed list of all workerIds
-		workerIds: workerIds,
+		// map addresses to clients
+		MonitorClientPool: 	make(map[string]phoenix.MonitorInterface, 0),
+		workerIds: 			[]string{},
+		workerIdToTask: 	make(map[string]map[string]bool),
+		workerLock: 		sync.Mutex{},
+
 	}
+
+	ready := make(chan bool)
+	// dynamically update monitorClientPool
+	// dynamically update workerIds
+	go ts.watchWorkerNodes(zkHostPorts, ready)
+
+	// wait for scheduler to find at least one living worker
+	<- ready
+
+	return ts
 }
 
-var _ phoenix.TaskSchedulerInterface = new(TaskScheduler)
+func (ts *TaskScheduler) watchWorkerNodes(zkHostPorts []string, ready chan bool) {
+
+	var err error
+	ts.zkConn, _, err = zk.Connect(zkHostPorts, phoenix.ZK_MONITOR_CONNECTION_TIMEOUT)
+	if err != nil {
+		fmt.Println("[NodeMonitor: registerMonitorZK] Unable to connect to Zookeeper!")
+		panic(err)
+	}
+
+	workerNodeExists, _, err := ts.zkConn.Exists(phoenix.ZK_WORKER_NODE_PATH)
+	if ! workerNodeExists || err != nil {
+		_, e := ts.zkConn.Create(phoenix.ZK_WORKER_NODE_PATH, []byte{0}, 0, zk.WorldACL(zk.PermAll))
+		if e != nil {
+			fmt.Printf("Error: %v\n Could not create Worker Node Path node at %s\n", e, phoenix.ZK_WORKER_NODE_PATH)
+		}
+	}
+
+	for {
+		children, _, eventChannel, err := ts.zkConn.ChildrenW(phoenix.ZK_WORKER_NODE_PATH)
+		fmt.Println("[TaskScheduler: watchWorkerNodes] children: ", children)
+		ts.rescheduleLostTasks(children)
+
+		if err != nil {
+			panic(fmt.Errorf("[TaskScheduler: watchWorkerNodes] error in getting children of %s: %v",
+				phoenix.ZK_WORKER_NODE_PATH, err))
+		}
+
+		if len(children) > 0 && ready != nil {
+			ready <- true
+			ready = nil
+		}
+
+		// wait for event
+		<- eventChannel
+	}
+
+}
+
+func (ts *TaskScheduler) rescheduleLostTasks(children []string) {
+
+	ts.workerLock.Lock()
+	defer ts.workerLock.Unlock()
+
+	// create new client pool and newWorkerIds
+	newClientPool := make(map[string]phoenix.MonitorInterface)
+	newWorkerIds := make([]string, len(children))
+	for idx, childAddress := range children {
+		newClientPool[childAddress] = monitor.GetNewClient(childAddress)
+		newWorkerIds[idx] = childAddress
+	}
+
+	for oldWorkerAddr := range ts.MonitorClientPool {
+		// reschedule lost tasks
+		_, exists := newClientPool[oldWorkerAddr]
+		if !exists {
+			for taskId := range ts.workerIdToTask[oldWorkerAddr] {
+
+				// extract corresponding jobId
+				ts.taskToJobLock.Lock()
+				jobId := ts.taskToJob[taskId]
+				ts.taskToJobLock.Unlock()
+
+				// set assignedWorker to false
+				ts.jobStatusLock.Lock()
+				ts.jobStatus[jobId][taskId].AssignedWorker = 0
+				ts.jobStatusLock.Unlock()
+			}
+
+			// clean up map
+			delete(ts.workerIdToTask, oldWorkerAddr)
+		}
+	}
+
+	// update client pool and workerIds
+	ts.MonitorClientPool = newClientPool
+	ts.workerIds = newWorkerIds
+}
 
 func (ts *TaskScheduler) SubmitJob(job types.Job, submitResult *bool) error {
 
@@ -114,7 +207,7 @@ func (ts *TaskScheduler) SubmitJob(job types.Job, submitResult *bool) error {
 	return nil
 }
 
-func (ts *TaskScheduler) GetTask(jobId string, task *types.Task) error {
+func (ts *TaskScheduler) GetTask(jobId string, taskRequest *types.TaskRequest) error {
 
 	ts.jobMapLock.Lock()
 	targetJob := ts.jobMap[jobId]
@@ -129,7 +222,19 @@ func (ts *TaskScheduler) GetTask(jobId string, task *types.Task) error {
 			continue
 		}
 
-		*task = pendingTask
+		ts.workerLock.Lock()
+		taskRequest.Task = &pendingTask
+
+		// pendingTask is now inflight at workerIdToTask
+
+		_, exists := ts.workerIdToTask[taskRequest.WorkerAddr]
+		if ! exists {
+			ts.workerIdToTask[taskRequest.WorkerAddr] = make(map[string]bool)
+		}
+
+		ts.workerIdToTask[taskRequest.WorkerAddr][pendingTask.Id] = true
+		ts.workerLock.Unlock()
+
 		//TODO: Need to update in the future or change it to Assigned boolean value
 		taskRecord.AssignedWorker = 0
 		// fmt.Println()
@@ -142,15 +247,20 @@ func (ts *TaskScheduler) GetTask(jobId string, task *types.Task) error {
 	ts.jobStatusLock.Unlock()
 
 	// No task got assigned
-	if task == nil {
+	if taskRequest.Task == nil {
 		// TODO: I need to know who's the requester to call cancellation.
+		// requester it taskRequest.AssignedWorker
 	}
 
 	return nil
 }
 
-func (ts *TaskScheduler) TaskComplete(taskId string, completeResult *bool) error {
-	//fmt.Println("task complete ", taskId)
+func (ts *TaskScheduler) TaskComplete(msg types.WorkerTaskCompleteMsg, completeResult *bool) error {
+
+	fmt.Println("[TaskScheduler: TaskComplete] Task has completed: ", msg)
+
+	taskId, workerAddr := msg.TaskID, msg.WorkerAddr
+
 	ts.taskToJobLock.Lock()
 	jobId, found := ts.taskToJob[taskId]
 	if !found {
@@ -160,12 +270,21 @@ func (ts *TaskScheduler) TaskComplete(taskId string, completeResult *bool) error
 	}
 	ts.taskToJobLock.Unlock()
 
+	ts.workerLock.Lock()
+	// taskId is no longer in flight at workerAddr
+	delete(ts.workerIdToTask[workerAddr], taskId)
+	ts.workerLock.Unlock()
+
+	fmt.Println("[TaskScheduler: TaskComplete] status update")
+
 	ts.jobStatusLock.Lock()
 	currTaskRecord := ts.jobStatus[jobId][taskId]
 	currTaskRecord.Finished = true
 	leftJob := ts.jobLeftTask[jobId] - 1
 	ts.jobLeftTask[jobId] = leftJob
 	ts.jobStatusLock.Unlock()
+
+	fmt.Println("[TaskScheduler: TaskComplete] if condition")
 
 	// Clean things up when the job is finished
 	if leftJob == 0 {
@@ -225,10 +344,13 @@ func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
 		queuePos := 0
 
 		targetWorkerId := probeNodesList[targetIndex%len(probeNodesList)]
+
+		ts.workerLock.Lock()
 		if e := ts.MonitorClientPool[targetWorkerId].EnqueueReservation(taskR, &queuePos); e != nil {
-			fmt.Printf("[TaskScheduler %s: enqueueJob]: Failed to enqueue reservation on %d\n",
-				ts.Addr, targetWorkerId)
+			fmt.Printf("[TaskScheduler %s: enqueueJob]: Failed to enqueue reservation on %s: %v\n",
+				ts.Addr, targetWorkerId, e)
 		}
+		ts.workerLock.Unlock()
 
 		fmt.Printf("[TaskScheduler %s: enqueueJob]: Enqueuing reservation on monitor %d for job reservation %s\n",
 			ts.Addr, targetWorkerId, taskR.JobID)
@@ -246,9 +368,14 @@ func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
 	return nil
 }
 
-func (ts *TaskScheduler) selectEnqueueWorker(probeCount int) []int {
+func (ts *TaskScheduler) selectEnqueueWorker(probeCount int) []string {
 
-	probeNodesList := make([]int, 0)
+	// TODO: maybe we can be more conservative with locks
+	// locks around modifying workerIds
+	ts.workerLock.Lock()
+	defer ts.workerLock.Unlock()
+
+	probeNodesList := make([]string, 0)
 
 	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(ts.workerIds), func(i, j int) {
@@ -263,17 +390,5 @@ func (ts *TaskScheduler) selectEnqueueWorker(probeCount int) []int {
 	return probeNodesList
 }
 
-func MapToList(nodeMap map[int]bool) (resultList []int) {
 
-	resultList = []int{}
 
-	for nodeId, _ := range nodeMap {
-		resultList = append(resultList, nodeId)
-	}
-
-	return
-}
-
-//SubmitJob(job types.Job, submitResult *bool) error
-//GetTask(taskId string, task *types.Task) error
-//TaskComplete(taskId string, completeResult *bool) error

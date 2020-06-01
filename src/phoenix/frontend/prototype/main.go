@@ -48,8 +48,8 @@ func main() {
 	<- feConfig.Ready
 
 	// TODO: randomize number of jobs or tasks
-	numTasks := 25
-	numJobs := 20
+	numTasks := 10
+	numJobs := 2
 
 	jobList := make([]*types.Job, 20)
 	var sumOfTaskTimes float32 = 0

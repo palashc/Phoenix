@@ -29,7 +29,7 @@ func main() {
 	rc, e := config.LoadConfig(*frc)
 	noError(e)
 
-	monitorClientMap := make(map[int]phoenix.MonitorInterface)
+	monitorClientMap := make([]phoenix.MonitorInterface, len(rc.Monitors))
 	for index, monitorAddr := range rc.Monitors {
 		monitorClientMap[index] = monitor.GetNewClient(monitorAddr)
 	}
@@ -45,7 +45,8 @@ func main() {
 		}
 
 		schedulerAddr := rc.Schedulers[i]
-		sConfig := rc.NewTaskSchedulerConfig(i, scheduler.NewTaskScheduler(schedulerAddr, monitorClientMap, frontendClientMap))
+		sConfig := rc.NewTaskSchedulerConfig(i,
+			scheduler.NewTaskScheduler(schedulerAddr, phoenix.ZkLocalServers, frontendClientMap))
 
 		// default slot count = 4
 		log.Printf("scheduler serving on %s", sConfig.Addr)

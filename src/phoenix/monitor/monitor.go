@@ -64,10 +64,14 @@ func (nm *NodeMonitor) EnqueueReservation(taskReservation types.TaskReservation,
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
 
-	// fmt.Printf("[Monitor: EnqueueReservation]: adding task reservation for job: %s to queue\n",
-	//		taskReservation.JobID)
+	fmt.Printf("[Monitor: EnqueueReservation]: adding task reservation for job: %s to queue\n",
+			taskReservation.JobID)
+
+	fmt.Println("[Monitor: EnqueueReservation]: queue length", nm.queue.Len())
 
 	nm.queue.Enqueue(taskReservation)
+
+	fmt.Println("[Monitor: EnqueueReservation]: Signalling launch condition")
 	nm.launchCond.Signal()
 
 	*position = nm.queue.Len()
@@ -98,7 +102,7 @@ func (nm *NodeMonitor) TaskComplete(taskID string, ret *bool) error {
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
 
-	// fmt.Printf("[Monitor: TaskComplete]: task %s marked as complete\n", taskID)
+	fmt.Printf("[Monitor: TaskComplete]: task %s marked as complete\n", taskID)
 
 	//get the scheduler for the task
 	schedulerAddr, ok := nm.taskSchedulerMap[taskID]
@@ -113,8 +117,13 @@ func (nm *NodeMonitor) TaskComplete(taskID string, ret *bool) error {
 	if !ok {
 		return fmt.Errorf("[Task Complete] Unable to get a scheduler client")
 	}
+
+	fmt.Println("[Monitor: TaskComplete] hitting TaskComplete on schedulerClient")
 	var succ bool
-	err := schedulerClient.TaskComplete(taskID, &succ)
+	err := schedulerClient.TaskComplete(types.WorkerTaskCompleteMsg{
+		TaskID: taskID,
+		WorkerAddr: nm.addr,
+	}, &succ)
 	if err != nil {
 		return fmt.Errorf("[Task Complete] Unable to notify scheduler about task completion: %q", err)
 	}
@@ -148,22 +157,26 @@ func (nm *NodeMonitor) CancelTaskReservation(jobID string, ret *bool) error {
 /*
 Gets the task information from the scheduler for a reservation.
 */
-func (nm *NodeMonitor) getTask(taskReservation types.TaskReservation) (types.Task, error) {
+func (nm *NodeMonitor) getTask(taskReservation types.TaskReservation) (*types.Task, error) {
 
 	schedulerAddr := taskReservation.SchedulerAddr
 	schedulerClient, ok := nm.schedulerClients[schedulerAddr]
 	if !ok {
-		return types.Task{}, fmt.Errorf("[getTask] Unable to get a scheduler client")
+		return nil, fmt.Errorf("[getTask] Unable to get a scheduler client")
 	}
 	jobID := taskReservation.JobID
 
 	var task types.Task
-	err := schedulerClient.GetTask(jobID, &task)
+	taskRequest := types.TaskRequest{WorkerAddr: nm.addr, Task: &task}
+	err := schedulerClient.GetTask(jobID, &taskRequest)
+
+	fmt.Printf("[Monitor: getTask] called GetTask for %s: got %v\n", jobID, taskRequest)
+
 	if err != nil {
-		return types.Task{}, fmt.Errorf("[getTask] Unable to get task %v from scheduler %v : %q", jobID, schedulerAddr, err)
+		return nil, fmt.Errorf("[getTask] Unable to get task %v from scheduler %v : %q", jobID, schedulerAddr, err)
 	}
 
-	return task, nil
+	return taskRequest.Task, nil
 }
 
 /*
@@ -176,6 +189,9 @@ func (nm *NodeMonitor) launchTask(task types.Task, reservation types.TaskReserva
 	// fmt.Println("[Monitor: launchTask]: Now calling executor to launch ", task)
 	var ret bool
 	err := nm.executorClient.LaunchTask(task, &ret)
+
+	fmt.Println("[Monitor: launchTask] Just launched task: ", task)
+
 	if err != nil {
 		return err
 	}
@@ -223,10 +239,10 @@ func (nm *NodeMonitor) getAndLaunchTask(taskReservation types.TaskReservation) e
 		return fmt.Errorf("[NM] Unable to get task %v from scheduler: %q", taskReservation.JobID, err)
 	}
 
-	// fmt.Println("[Monitor getAndLaunchTask]: Task fetched", taskReservation, task)
+	 fmt.Println("[Monitor getAndLaunchTask]: Task fetched", taskReservation, task)
 
-	if task.T > 0 {
-		err = nm.launchTask(task, taskReservation)
+	if task != nil && task.T > 0 {
+		err = nm.launchTask(*task, taskReservation)
 		if err != nil {
 			return fmt.Errorf("[NM] Unable to launch task %v on executor: %q", taskReservation.JobID, err)
 		}
@@ -244,10 +260,11 @@ func (nm *NodeMonitor) taskLauncher() {
 		nm.launchCond.L.Lock()
 		for nm.activeTasks >= nm.slotCount || nm.queue.Len() == 0 {
 			nm.launchCond.Wait()
+			// fmt.Println("[Monitor: TaskLauncher] woke up from waiting")
 		}
 
 		// fmt.Println("[Monitor: TaskLauncher] About to attempt launch task, active tasks: ", nm.activeTasks)
-		// fmt.Println("[Monitor: TaskLauncher] queueSize: ", nm.queue.Len())
+		fmt.Println("[Monitor: TaskLauncher] queueSize: ", nm.queue.Len())
 		nm.attemptLaunchTask()
 
 		nm.launchCond.L.Unlock()
