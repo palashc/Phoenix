@@ -49,7 +49,7 @@ func main() {
 
 	// TODO: randomize number of jobs or tasks
 	numTasks := 10
-	numJobs := 2
+	numJobs := 5
 
 	jobList := make([]*types.Job, 20)
 	var sumOfTaskTimes float32 = 0
@@ -104,7 +104,7 @@ func main() {
 }
 
 func writeToFile(rc *config.PhoenixConfig, jobCount, taskCount int, timeTaken, overhead float32) error {
-	logName := strconv.Itoa(len(rc.Schedulers)) + "_sched:" + strconv.Itoa(len(rc.Monitors)) + "_mtor:" +
+	logName := "logs/" + strconv.Itoa(len(rc.Schedulers)) + "_sched:" + strconv.Itoa(len(rc.Monitors)) + "_mtor:" +
 		strconv.Itoa(rc.NumSlots) + "_slots" + strconv.Itoa(taskCount) + "_tasks.log"
 
 	fout, e := rc.Write(logName)
