@@ -109,14 +109,21 @@ func (nm *NodeMonitor) TaskComplete(taskID string, ret *bool) error {
 
 	*ret = false
 	if !ok {
+		fmt.Printf("[TaskComplete] Task %v not found", taskID)
 		return fmt.Errorf("[TaskComplete] Task %v not found", taskID)
 	}
+
+
+	fmt.Printf("[Monitor: TaskComplete] Task %v found\n", taskID)
 
 	//notify scheduler about task completion
 	schedulerClient, ok := nm.schedulerClients[schedulerAddr]
 	if !ok {
+		fmt.Println("[Task Complete] Unable to get a scheduler client")
 		return fmt.Errorf("[Task Complete] Unable to get a scheduler client")
 	}
+
+	fmt.Println("[Monitor: Task Complete] Able to get a scheduler client")
 
 	// fmt.Println("[Monitor: TaskComplete] hitting TaskComplete on schedulerClient")
 	var succ bool
@@ -124,14 +131,21 @@ func (nm *NodeMonitor) TaskComplete(taskID string, ret *bool) error {
 		TaskID: taskID,
 		WorkerAddr: nm.addr,
 	}, &succ)
+
+	fmt.Println("[Monitor: Task Complete] Able to get a scheduler client")
+
 	if err != nil {
+		fmt.Printf("[Task Complete] Unable to notify scheduler about task completion: %q", err)
 		return fmt.Errorf("[Task Complete] Unable to notify scheduler about task completion: %q", err)
 	}
 	if !succ {
+		fmt.Printf("[Task Complete] Unable to notify scheduler about task completion")
 		return fmt.Errorf("[Task Complete] Unable to notify scheduler about task completion")
 	}
 
 	nm.activeTasks--
+
+	fmt.Println("[Monitor: TaskComplete] task completed; signaling launch condition")
 	nm.launchCond.Signal()
 
 	*ret = true
