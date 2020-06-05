@@ -79,6 +79,8 @@ func (ec *ECState) workerCoordinator() {
 		// find worker that has finished; block on doneChannel
 		finishedTask := <-ec.doneChan
 
+		fmt.Println("[Executor: workerCoordinator] finishedTask ", finishedTask)
+
 		ec.lock.Lock()
 
 		// mark worker as available again
@@ -104,8 +106,8 @@ func (ec *ECState) LaunchTask(task types.Task, ret *bool) error {
 	ec.lock.Lock()
 	defer ec.lock.Unlock()
 
-	// fmt.Printf("[Executor %d: LaunchTask]: Incoming request for Task %s:%s \n",
-	//	ec.id, task.JobId, task.Id)
+	fmt.Printf("[Executor %d: LaunchTask]: Incoming request for Task %s:%s \n",
+		ec.id, task.JobId, task.Id)
 
 	*ret = true
 

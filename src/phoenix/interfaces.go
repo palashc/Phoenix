@@ -26,7 +26,7 @@ type MonitorInterface interface {
 
 type TaskSchedulerInterface interface {
 	SubmitJob(job types.Job, submitResult *bool) error
-	GetTask(taskId string, task *types.Task) error
-	TaskComplete(jobId string, completeResult *bool) error
+	GetTask(jobId string, taskRequest *types.TaskRequest) error
+	TaskComplete(msg types.WorkerTaskCompleteMsg, completeResult *bool) error
 }
 

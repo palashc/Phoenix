@@ -10,6 +10,16 @@ type Task struct {
 	T     float32
 }
 
+type TaskRequest struct {
+	Task 	 	*Task
+	WorkerAddr	string
+}
+
+type WorkerTaskCompleteMsg struct {
+	TaskID 		string
+	WorkerAddr	string
+}
+
 type TaskRecord struct {
 	Task Task
 
