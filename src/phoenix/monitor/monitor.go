@@ -48,6 +48,7 @@ func NewNodeMonitor(slotCount int, executorClient phoenix.ExecutorInterface,
 		launchCond:       sync.NewCond(&sync.Mutex{}),
 		slotCount:        slotCount,
 		timeStats:        new(types.TimeStats),
+		taskTime:         make(map[string]time.Time)
 	}
 
 	nm.registerMonitorZK(zkHostPorts)
@@ -297,7 +298,12 @@ func (nm *NodeMonitor) taskLauncher() {
 		}
 
 		fmt.Println("[Monitor: TaskLauncher] About to attempt launch task, active tasks: ", nm.activeTasks)
-		// fmt.Println("[Monitor: TaskLauncher] queueSize: ", nm.queue.Len())
+		fmt.Println("---------------")
+		fmt.Println(nm.timeStats.ReserveTime)
+		fmt.Println(nm.timeStats.QueueTime)
+		fmt.Println(nm.timeStats.GetTaskTime)
+		fmt.Println(nm.timeStats.ServiceTime)
+		fmt.Println("---------------")
 		nm.attemptLaunchTask()
 
 		nm.launchCond.L.Unlock()
