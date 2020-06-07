@@ -10,6 +10,16 @@ type Task struct {
 	T     float64
 }
 
+type TaskRequest struct {
+	Task       *Task
+	WorkerAddr string
+}
+
+type WorkerTaskCompleteMsg struct {
+	TaskID     string
+	WorkerAddr string
+}
+
 type TaskRecord struct {
 	Task Task
 
@@ -21,7 +31,7 @@ type TaskRecord struct {
 type Job struct {
 	Id        string
 	Tasks     []Task
-	ownerAddr string
+	OwnerAddr string
 }
 
 // Task Reservation for late-binding

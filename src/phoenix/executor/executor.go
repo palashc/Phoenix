@@ -79,12 +79,14 @@ func (ec *ECState) workerCoordinator() {
 		// find worker that has finished; block on doneChannel
 		finishedTask := <-ec.doneChan
 
+		fmt.Println("[Executor: workerCoordinator] finishedTask ", finishedTask)
+
 		ec.lock.Lock()
 
 		// mark worker as available again
 		ec.availWorkers[finishedTask.workerID] = true
-		fmt.Printf("[Executor %d: workerCoordinator]: Worker %d just finished Task %s\n",
-			ec.id, finishedTask.workerID, finishedTask.taskID)
+		// fmt.Printf("[Executor %d: workerCoordinator]: Worker %d just finished Task %s\n",
+		//	ec.id, finishedTask.workerID, finishedTask.taskID)
 		ec.lock.Unlock()
 
 		go func(id string) {
@@ -111,7 +113,7 @@ func (ec *ECState) LaunchTask(task types.Task, ret *bool) error {
 
 	for wID := 0; wID < ec.slotCount; wID++ {
 		if ec.availWorkers[wID] {
-			fmt.Printf("[Executor %d: LaunchTask]: Found available worker: %d\n", ec.id, wID)
+			// fmt.Printf("[Executor %d: LaunchTask]: Found available worker: %d\n", ec.id, wID)
 			ec.taskChans[wID] <- &task
 
 			// this worker is no longer available
@@ -122,7 +124,7 @@ func (ec *ECState) LaunchTask(task types.Task, ret *bool) error {
 
 	*ret = false
 
-	fmt.Printf("[Executor %d: LaunchTask]: Request failed for Task %s:%s \n",
-		ec.id, task.JobId, task.Id)
+	// fmt.Printf("[Executor %d: LaunchTask]: Request failed for Task %s:%s \n",
+	// 	ec.id, task.JobId, task.Id)
 	return fmt.Errorf("All workers running")
 }

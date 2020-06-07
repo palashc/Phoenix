@@ -24,8 +24,8 @@ func Worker(executorId int, workerID int, taskChan chan *types.Task, doneChan ch
 		// synchronous method
 		performTask(newTask)
 
-		fmt.Printf("[Executor %d: Worker: %d]: Finished Task %s:%s; waited %f ms\n",
-			executorId, workerID, newTask.JobId, newTask.Id, newTask.T)
+		//fmt.Printf("[Executor %d: Worker: %d]: Finished Task %s:%s; waited %f ms\n",
+		//	executorId, workerID, newTask.JobId, newTask.Id, newTask.T)
 
 		// mark task as complete
 		doneChan <- taskDone{newTask.Id, workerID}

@@ -9,22 +9,28 @@ import (
 
 var DefaultConfigPath = "phoenix_config.conf"
 
+type FrontendConfig struct {
+	Addr     string
+	Frontend phoenix.FrontendInterface
+	Ready    chan bool
+}
+
 type ExecutorConfig struct {
 	Addr     string
 	Executor phoenix.ExecutorInterface
-	Ready    chan<- bool
+	Ready    chan bool
 }
 
 type MonitorConfig struct {
 	Addr    string
 	Monitor phoenix.MonitorInterface
-	Ready   chan<- bool
+	Ready   chan bool
 }
 
 type TaskSchedulerConfig struct {
 	Addr          string
 	TaskScheduler phoenix.TaskSchedulerInterface
-	Ready         chan<- bool
+	Ready         chan bool
 }
 
 //type JobGeneratorConfig struct {
@@ -37,9 +43,19 @@ type TaskSchedulerConfig struct {
 //}
 
 type PhoenixConfig struct {
+	NumSlots   int
+	Frontends  []string
 	Schedulers []string
 	Monitors   []string
 	Executors  []string
+}
+
+func (pc *PhoenixConfig) NewFrontendConfig(i int, fe phoenix.FrontendInterface) *FrontendConfig {
+	return &FrontendConfig{
+		Addr:     pc.Frontends[i],
+		Frontend: fe,
+		Ready:    make(chan bool, 1),
+	}
 }
 
 func (pc *PhoenixConfig) NewTaskSchedulerConfig(i int, ts phoenix.TaskSchedulerInterface) *TaskSchedulerConfig {
@@ -85,6 +101,21 @@ func (pc *PhoenixConfig) Save(p string) error {
 	}
 
 	return fout.Close()
+}
+func (pc *PhoenixConfig) Write(p string) (*os.File, error) {
+	b := pc.marshal()
+
+	fout, e := os.Create(p)
+	if e != nil {
+		return nil, e
+	}
+
+	_, e = fout.Write(b)
+	if e != nil {
+		return nil, e
+	}
+
+	return fout, nil
 }
 
 func (pc *PhoenixConfig) String() string {

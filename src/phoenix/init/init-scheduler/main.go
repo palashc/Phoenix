@@ -6,6 +6,8 @@ import (
 	"log"
 	"phoenix"
 	"phoenix/config"
+	"phoenix/frontend"
+
 	//"phoenix/executor"
 	"phoenix/monitor"
 	"phoenix/scheduler"
@@ -27,9 +29,14 @@ func main() {
 	rc, e := config.LoadConfig(*frc)
 	noError(e)
 
-	monitorClientMap := make(map[int]phoenix.MonitorInterface)
+	monitorClientMap := make([]phoenix.MonitorInterface, len(rc.Monitors))
 	for index, monitorAddr := range rc.Monitors {
 		monitorClientMap[index] = monitor.GetNewClient(monitorAddr)
+	}
+
+	frontendClientMap := make(map[string]phoenix.FrontendInterface)
+	for _, frontendAddr := range rc.Frontends {
+		frontendClientMap[frontendAddr] = frontend.GetNewClient(frontendAddr)
 	}
 
 	run := func(i int) {
@@ -38,7 +45,8 @@ func main() {
 		}
 
 		schedulerAddr := rc.Schedulers[i]
-		sConfig := rc.NewTaskSchedulerConfig(i, scheduler.NewTaskScheduler(schedulerAddr, monitorClientMap))
+		sConfig := rc.NewTaskSchedulerConfig(i,
+			scheduler.NewTaskScheduler(schedulerAddr, phoenix.ZkLocalServers, frontendClientMap))
 
 		// default slot count = 4
 		log.Printf("scheduler serving on %s", sConfig.Addr)
