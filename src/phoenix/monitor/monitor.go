@@ -48,7 +48,7 @@ func NewNodeMonitor(slotCount int, executorClient phoenix.ExecutorInterface,
 		launchCond:       sync.NewCond(&sync.Mutex{}),
 		slotCount:        slotCount,
 		timeStats:        new(types.TimeStats),
-		taskTime:         make(map[string]time.Time)
+		taskTime:         make(map[string]time.Time),
 	}
 
 	nm.registerMonitorZK(zkHostPorts)
