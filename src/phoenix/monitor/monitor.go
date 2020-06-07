@@ -14,6 +14,8 @@ import (
 	"sync"
 )
 
+const timeStatsUnit = time.Microsecond
+
 type NodeMonitor struct {
 	addr             string
 	activeTasks      int
@@ -77,7 +79,7 @@ func (nm *NodeMonitor) EnqueueReservation(taskReservation types.TaskReservation,
 	fmt.Println("[Monitor: EnqueueReservation]: queue length", nm.queue.Len())
 
 	taskReservation.RecvTS = now
-	nm.timeStats.ReserveTime = append(nm.timeStats.ReserveTime, now.Sub(taskReservation.SendTS))
+	nm.timeStats.ReserveTime = append(nm.timeStats.ReserveTime, float64(now.Sub(taskReservation.SendTS)/timeStatsUnit))
 	nm.queue.Enqueue(taskReservation)
 
 	fmt.Println("[Monitor: EnqueueReservation]: Signalling launch condition")
@@ -115,7 +117,7 @@ func (nm *NodeMonitor) TaskComplete(taskID string, ret *bool) error {
 
 	taskStartTime, ok := nm.taskTime[taskID]
 	if ok {
-		nm.timeStats.ServiceTime = append(nm.timeStats.ServiceTime, now.Sub(taskStartTime))
+		nm.timeStats.ServiceTime = append(nm.timeStats.ServiceTime, float64(now.Sub(taskStartTime)/timeStatsUnit))
 	}
 	fmt.Printf("[Monitor: TaskComplete]: task %s marked as complete\n", taskID)
 
@@ -251,7 +253,7 @@ func (nm *NodeMonitor) attemptLaunchTask() {
 			if taskR.IsNotEmpty() {
 				// fmt.Printf("[Monitor: attemptLaunchTask]: launching %s\n", taskR.JobID)
 				// TODO: Parallelize with goroutines
-				nm.timeStats.QueueTime = append(nm.timeStats.QueueTime, now.Sub(taskR.RecvTS))
+				nm.timeStats.QueueTime = append(nm.timeStats.QueueTime, float64(now.Sub(taskR.RecvTS)/timeStatsUnit))
 				err := nm.getAndLaunchTask(taskR)
 				if err != nil {
 					panic("Unable to launch next task")
@@ -268,7 +270,7 @@ func (nm *NodeMonitor) getAndLaunchTask(taskReservation types.TaskReservation) e
 
 	t1 := time.Now()
 	task, err := nm.getTask(taskReservation)
-	nm.timeStats.GetTaskTime = append(nm.timeStats.GetTaskTime, time.Now().Sub(t1))
+	nm.timeStats.GetTaskTime = append(nm.timeStats.GetTaskTime, float64(time.Now().Sub(t1)/timeStatsUnit))
 	if err != nil {
 		return fmt.Errorf("[NM] Unable to get task %v from scheduler: %q", taskReservation.JobID, err)
 	}

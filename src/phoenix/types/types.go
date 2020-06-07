@@ -46,10 +46,10 @@ type TaskReservation struct {
 
 // Struct for collecting time statistics
 type TimeStats struct {
-	ReserveTime []time.Duration
-	QueueTime   []time.Duration
-	GetTaskTime []time.Duration
-	ServiceTime []time.Duration
+	ReserveTime []float64
+	QueueTime   []float64
+	GetTaskTime []float64
+	ServiceTime []float64
 }
 
 func (tr *TaskReservation) IsNotEmpty() bool {

@@ -45,11 +45,11 @@ func main() {
 
 	// run Frontend server
 	go frontend.ServeFrontend(feConfig)
-	<- feConfig.Ready
+	<-feConfig.Ready
 
 	// TODO: randomize number of jobs or tasks
-	numTasks := 10
-	numJobs := 5
+	numTasks := 20
+	numJobs := 10
 
 	jobList := make([]*types.Job, 20)
 	var sumOfTaskTimes float32 = 0
@@ -69,7 +69,7 @@ func main() {
 		}
 
 		jobList[i] = &types.Job{
-			Id: jobid,
+			Id:    jobid,
 			Tasks: tasks,
 
 			// TODO: Currently we only test with one frontend
