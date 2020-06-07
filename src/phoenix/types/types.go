@@ -7,7 +7,7 @@ type TaskID string
 type Task struct {
 	JobId string
 	Id    string
-	T     float32
+	T     float64
 }
 
 type TaskRecord struct {

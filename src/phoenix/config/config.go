@@ -27,6 +27,15 @@ type TaskSchedulerConfig struct {
 	Ready         chan<- bool
 }
 
+//type JobGeneratorConfig struct {
+//	Seed			int
+//	TaskDuration	int
+//
+//	// Extending for future testing file delivery
+//	UseTaskFile		bool
+//	TaskFileName	string
+//}
+
 type PhoenixConfig struct {
 	Schedulers []string
 	Monitors   []string

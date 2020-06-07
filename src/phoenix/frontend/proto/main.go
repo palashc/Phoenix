@@ -12,7 +12,13 @@ import (
 	"strconv"
 )
 
-var frc = flag.String("conf", config.DefaultConfigPath, "config file")
+var (
+	frc          = flag.String("conf", config.DefaultConfigPath, "config file")
+	useRand      = flag.Bool("useRand", false, "use random seed to generate job, default to hash based on address")
+	jobCount     = flag.Int("jobCount", 10, "number of job to generate")
+	taskCount    = flag.Int("taskCount", 10, "number of task in a job")
+	meanDuration = flag.Float64("jobDuration", 100.0, "job duration in ms")
+)
 
 func noError(e error) {
 	if e != nil {
@@ -33,17 +39,24 @@ func main() {
 		schedulerClientMap[schedulerAddr] = scheduler.GetNewTaskSchedulerClient(schedulerAddr)
 	}
 
-	numTasks := 20
-	numJobs := 10
+	numTasks := *taskCount
+	numJobs := *jobCount
 	done := make(chan bool)
 
 	jobFn := func(jobN int, done chan bool) {
 		jobid := "job" + strconv.Itoa(jobN)
 		job := types.Job{Id: jobid}
 		tasks := []types.Task{}
+
+		currTaskDuration := *meanDuration
+
+		if *useRand {
+			currTaskDuration *= rand.ExpFloat64()
+		}
+
 		for j := 0; j < numTasks; j++ {
 			taskid := jobid + "-task" + strconv.Itoa(j)
-			task := types.Task{JobId: jobid, Id: taskid, T: rand.Float32()}
+			task := types.Task{JobId: jobid, Id: taskid, T: currTaskDuration}
 			tasks = append(tasks, task)
 		}
 		job.Tasks = tasks
