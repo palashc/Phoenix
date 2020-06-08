@@ -14,7 +14,13 @@ import (
 	"time"
 )
 
-var frc = flag.String("conf", config.DefaultConfigPath, "config file")
+var (
+	frc          = flag.String("conf", config.DefaultConfigPath, "config file")
+	useRand      = flag.Bool("useRand", false, "use random seed to generate job, default to hash based on address")
+	jobCount     = flag.Int("jobCount", 10, "number of job to generate")
+	taskCount    = flag.Int("taskCount", 10, "number of task in a job")
+	meanDuration = flag.Float64("jobDuration", 3.0, "job duration in second")
+)
 
 func noError(e error) {
 	if e != nil {
@@ -47,23 +53,36 @@ func main() {
 	go frontend.ServeFrontend(feConfig)
 	<-feConfig.Ready
 
-	// TODO: randomize number of jobs or tasks
-	numTasks := 20
-	numJobs := 10
+	if *useRand {
+		rand.Seed(time.Now().UnixNano())
+	} else {
+		// just some random number here
+		var randSeed int64 = 1111
+		rand.Seed(randSeed)
+	}
+
+	numTasks := *taskCount
+	numJobs := *jobCount
 
 	jobList := make([]*types.Job, 20)
-	var sumOfTaskTimes float32 = 0
+	var sumOfTaskTimes float64 = 0
 
 	// populate jobList
 	for i := 0; i < numJobs; i++ {
 		jobid := "job" + strconv.Itoa(i)
 		tasks := make([]types.Task, 0)
+
+		currTaskDuration := *meanDuration
+
+		if *useRand {
+			currTaskDuration *= rand.ExpFloat64()
+		}
+
 		for j := 0; j < numTasks; j++ {
 			taskid := jobid + "-task" + strconv.Itoa(j)
 
-			taskTime := rand.Float32()
-			sumOfTaskTimes += taskTime
-			task := types.Task{JobId: jobid, Id: taskid, T: taskTime}
+			sumOfTaskTimes += currTaskDuration
+			task := types.Task{JobId: jobid, Id: taskid, T: currTaskDuration}
 
 			tasks = append(tasks, task)
 		}
@@ -89,10 +108,10 @@ func main() {
 		<-jobDoneChan
 	}
 
-	timeTaken := float32(time.Since(startTime).Seconds())
+	timeTaken := time.Since(startTime).Seconds()
 
 	slotCount := len(rc.Executors) * rc.NumSlots
-	theoreticalLowerBound := sumOfTaskTimes / float32(slotCount)
+	theoreticalLowerBound := sumOfTaskTimes / float64(slotCount)
 
 	overhead := 100 * (timeTaken/theoreticalLowerBound - 1)
 
@@ -103,7 +122,7 @@ func main() {
 	writeToFile(rc, numJobs, numTasks, timeTaken, overhead)
 }
 
-func writeToFile(rc *config.PhoenixConfig, jobCount, taskCount int, timeTaken, overhead float32) error {
+func writeToFile(rc *config.PhoenixConfig, jobCount, taskCount int, timeTaken, overhead float64) error {
 	logName := "logs/" + strconv.Itoa(len(rc.Schedulers)) + "_sched:" + strconv.Itoa(len(rc.Monitors)) + "_mtor:" +
 		strconv.Itoa(rc.NumSlots) + "_slots" + strconv.Itoa(taskCount) + "_tasks.log"
 

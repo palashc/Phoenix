@@ -10,9 +10,9 @@ import (
 var DefaultConfigPath = "phoenix_config.conf"
 
 type FrontendConfig struct {
-	Addr 		string
-	Frontend	phoenix.FrontendInterface
-	Ready		chan bool
+	Addr     string
+	Frontend phoenix.FrontendInterface
+	Ready    chan bool
 }
 
 type ExecutorConfig struct {
@@ -33,6 +33,15 @@ type TaskSchedulerConfig struct {
 	Ready         chan bool
 }
 
+//type JobGeneratorConfig struct {
+//	Seed			int
+//	TaskDuration	int
+//
+//	// Extending for future testing file delivery
+//	UseTaskFile		bool
+//	TaskFileName	string
+//}
+
 type PhoenixConfig struct {
 	NumSlots   int
 	Frontends  []string
@@ -43,9 +52,9 @@ type PhoenixConfig struct {
 
 func (pc *PhoenixConfig) NewFrontendConfig(i int, fe phoenix.FrontendInterface) *FrontendConfig {
 	return &FrontendConfig{
-		Addr: 		pc.Frontends[i],
-		Frontend: 	fe,
-		Ready: 		make(chan bool, 1),
+		Addr:     pc.Frontends[i],
+		Frontend: fe,
+		Ready:    make(chan bool, 1),
 	}
 }
 
@@ -58,10 +67,10 @@ func (pc *PhoenixConfig) NewTaskSchedulerConfig(i int, ts phoenix.TaskSchedulerI
 }
 
 func (pc *PhoenixConfig) NewMonitorConfig(i int, nm phoenix.MonitorInterface) *MonitorConfig {
-	ret := 			new(MonitorConfig)
-	ret.Addr = 		pc.Monitors[i]
-	ret.Monitor = 	nm
-	ret.Ready = 	make(chan bool, 1)
+	ret := new(MonitorConfig)
+	ret.Addr = pc.Monitors[i]
+	ret.Monitor = nm
+	ret.Ready = make(chan bool, 1)
 	return ret
 }
 
