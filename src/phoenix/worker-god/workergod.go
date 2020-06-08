@@ -121,9 +121,9 @@ func (ww *WorkerWrapper) Start(workerId int, ret* bool) error {
 
 	// save output to logs
 	go writeToLog(mStdout, "logs/monitor_"+strconv.Itoa(workerId)+"_" +
-		strconv.FormatInt(time.Now().Unix(), 10)+".log")
+		strconv.FormatInt(time.Now().Unix(), 36)+".log")
 	go writeToLog(eStdout, "logs/executor_"+strconv.Itoa(workerId)+"_" +
-		strconv.FormatInt(time.Now().Unix(), 10)+".log")
+		strconv.FormatInt(time.Now().Unix(), 36)+".log")
 
 	*ret = true
 	return nil

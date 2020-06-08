@@ -80,10 +80,10 @@ func (pc *PhoenixConfig) NewExecutorConfig(i int, ec phoenix.ExecutorInterface) 
 	}
 }
 
-func (pc *PhoenixConfig) NewWorkerGodConfig(i int, ec phoenix.WorkerGod) *WorkerGodConfig {
+func (pc *PhoenixConfig) NewWorkerGodConfig(i int, ww phoenix.WorkerGod) *WorkerGodConfig {
 	return &WorkerGodConfig{
 		Addr:     pc.WorkerGods[i],
-		WorkerGod: ec,
+		WorkerGod: ww,
 		Ready:    make(chan bool, 1),
 	}
 }

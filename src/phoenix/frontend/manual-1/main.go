@@ -79,6 +79,9 @@ func main() {
 
 	allJobsDoneSignal := make(chan bool)
 
+	// time taken by jobs
+	var timeTaken float32
+
 	// run jobs
 	startTime := time.Now()
 	for i := 0; i < numJobs; i++ {
@@ -91,12 +94,15 @@ func main() {
 		for i := 0; i < numJobs; i++ {
 			fmt.Println("finished job: ", <-jobDoneChan)
 		}
+
+		// set time taken
+		timeTaken = float32(time.Since(startTime).Seconds())
 		allJobsDoneSignal <- true
 	}()
 
-	<- allJobsDoneSignal
+	// We can use worker-god to start or kill more jobs here
 
-	timeTaken := float32(time.Since(startTime).Seconds())
+	<- allJobsDoneSignal
 
 	slotCount := len(rc.Executors) * rc.NumSlots
 	theoreticalLowerBound := sumOfTaskTimes / float32(slotCount)

@@ -95,6 +95,9 @@ func main() {
 
 	allJobsDoneSignal := make(chan bool)
 
+	// time taken by jobs
+	var timeTaken float32
+
 	// run jobs
 	startTime := time.Now()
 	for i := 0; i < numJobs; i++ {
@@ -107,6 +110,7 @@ func main() {
 		for i := 0; i < numJobs; i++ {
 			fmt.Println("finished job: ", <-jobDoneChan)
 		}
+		timeTaken = float32(time.Since(startTime).Seconds())
 		allJobsDoneSignal <- true
 	}()
 
@@ -144,7 +148,6 @@ func main() {
 	fmt.Println("Done Sleeping")
 	<- allJobsDoneSignal
 
-	timeTaken := float32(time.Since(startTime).Seconds())
 
 	slotCount := len(rc.Executors) * rc.NumSlots
 	theoreticalLowerBound := sumOfTaskTimes / float32(slotCount)
