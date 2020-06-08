@@ -8,6 +8,7 @@ import (
 	"phoenix/monitor"
 	"phoenix/types"
 	"sync"
+	"time"
 )
 
 const DefaultSampleRatio = 2
@@ -19,15 +20,15 @@ type TaskScheduler struct {
 	MonitorClientPool 	map[string]*monitor.NodeMonitorClient
 
 	// addresses of our workers
-	workerIds 			[]string
+	workerAddresses []string
 
 	// map of worker address to current tasks assigned to worker
-	workerIdToTask 		map[string]map[string]bool
+	workerAddrToTask map[string]map[string]bool
 
 	// map of worker address to count per jobId reservations
-	workerIdToJobReservations map[string]map[string] int
+	workerAddrToJobReservations map[string]map[string] int
 
-	// lock around MonitorClientPool, workerIds, workerIdToTask, workerIdReservations
+	// lock around MonitorClientPool, workerAddresses, workerAddrToTask, workerIdReservations
 	workerLock	sync.Mutex
 
 	// Frontend Client Pool
@@ -71,16 +72,16 @@ func NewTaskScheduler(addr string, zkHostPorts []string, frontendClientPool map[
 		Addr:              addr,
 
 		// map addresses to clients
-		MonitorClientPool: 			make(map[string]*monitor.NodeMonitorClient),
-		workerIds: 					[]string{},
-		workerIdToTask: 			make(map[string]map[string]bool),
-		workerIdToJobReservations: 	make(map[string]map[string]int),
-		workerLock: 				sync.Mutex{},
+		MonitorClientPool:           make(map[string]*monitor.NodeMonitorClient),
+		workerAddresses:             []string{},
+		workerAddrToTask:            make(map[string]map[string]bool),
+		workerAddrToJobReservations: make(map[string]map[string]int),
+		workerLock:                  sync.Mutex{},
 	}
 
 	ready := make(chan bool)
 	// dynamically update monitorClientPool
-	// dynamically update workerIds
+	// dynamically update workerAddresses
 	go ts.watchWorkerNodes(zkHostPorts, ready)
 
 	// wait for scheduler to find at least one living worker
@@ -147,10 +148,10 @@ func (ts *TaskScheduler) rescheduleLostTasks(children []string) {
 		if !exists {
 
 			ts.workerLock.Lock()
-			taskMap := ts.workerIdToTask[oldWorkerAddr]
+			taskMap := ts.workerAddrToTask[oldWorkerAddr]
 
 			// extract jobs that were enqueued on worker
-			for jobId := range ts.workerIdToJobReservations[oldWorkerAddr] {
+			for jobId := range ts.workerAddrToJobReservations[oldWorkerAddr] {
 				makeupJobsMap[jobId] = true
 			}
 			ts.workerLock.Unlock()
@@ -172,8 +173,8 @@ func (ts *TaskScheduler) rescheduleLostTasks(children []string) {
 
 			// clean up map
 			ts.workerLock.Lock()
-			delete(ts.workerIdToTask, oldWorkerAddr)
-			delete(ts.workerIdToJobReservations, oldWorkerAddr)
+			delete(ts.workerAddrToTask, oldWorkerAddr)
+			delete(ts.workerAddrToJobReservations, oldWorkerAddr)
 			ts.workerLock.Unlock()
 		}
 
@@ -184,15 +185,16 @@ func (ts *TaskScheduler) rescheduleLostTasks(children []string) {
 			job := ts.jobMap[jobId]
 			ts.jobMapLock.Unlock()
 
-			// we liberally resubmit the entire job
+			// TODO: optimize the enqueueJob reqeusts that we send
+			// currently we liberally resubmit the entire job
 			go ts.enqueueJob(len(job.Tasks)*DefaultSampleRatio, jobId)
 		}
 	}
 
-	// update client pool and workerIds
+	// update client pool and workerAddresses
 	ts.workerLock.Lock()
 	ts.MonitorClientPool = newClientPool
-	ts.workerIds = newWorkerIds
+	ts.workerAddresses = newWorkerIds
 
 	ts.workerLock.Unlock()
 }
@@ -241,9 +243,9 @@ func (ts *TaskScheduler) GetTask(taskRequest types.TaskRequest, outputTask *type
 	targetJob := ts.jobMap[taskRequest.JobId]
 
 	// taskRequest.WorkerAddr has one less job reservation
-	ts.workerIdToJobReservations[taskRequest.WorkerAddr][taskRequest.JobId]--
-	if ts.workerIdToJobReservations[taskRequest.WorkerAddr][taskRequest.JobId] == 0 {
-		delete(ts.workerIdToJobReservations[taskRequest.WorkerAddr], taskRequest.JobId)
+	ts.workerAddrToJobReservations[taskRequest.WorkerAddr][taskRequest.JobId]--
+	if ts.workerAddrToJobReservations[taskRequest.WorkerAddr][taskRequest.JobId] == 0 {
+		delete(ts.workerAddrToJobReservations[taskRequest.WorkerAddr], taskRequest.JobId)
 	}
 	ts.jobMapLock.Unlock()
 
@@ -266,13 +268,13 @@ func (ts *TaskScheduler) GetTask(taskRequest types.TaskRequest, outputTask *type
 
 		ts.workerLock.Lock()
 
-		// pendingTask is now inflight at workerIdToTask
-		_, exists := ts.workerIdToTask[taskRequest.WorkerAddr]
+		// pendingTask is now inflight at workerAddrToTask
+		_, exists := ts.workerAddrToTask[taskRequest.WorkerAddr]
 		if ! exists {
-			ts.workerIdToTask[taskRequest.WorkerAddr] = make(map[string]bool)
+			ts.workerAddrToTask[taskRequest.WorkerAddr] = make(map[string]bool)
 		}
 
-		ts.workerIdToTask[taskRequest.WorkerAddr][pendingTask.Id] = true
+		ts.workerAddrToTask[taskRequest.WorkerAddr][pendingTask.Id] = true
 		ts.workerLock.Unlock()
 
 		//TODO: Need to update in the future or change it to Assigned boolean value
@@ -311,7 +313,7 @@ func (ts *TaskScheduler) TaskComplete(msg types.WorkerTaskCompleteMsg, completeR
 
 	ts.workerLock.Lock()
 	// taskId is no longer in flight at workerAddr
-	delete(ts.workerIdToTask[workerAddr], taskId)
+	delete(ts.workerAddrToTask[workerAddr], taskId)
 	ts.workerLock.Unlock()
 
 	ts.jobStatusLock.Lock()
@@ -367,22 +369,34 @@ func (ts *TaskScheduler) TaskComplete(msg types.WorkerTaskCompleteMsg, completeR
 
 func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
 
+	// TODO: compare performance of randomly selecting worker address with selecting from set of enqueueWorker
+	// performance depends on failure model we hold.
+	probeNodesList := ts.selectEnqueueWorker(enqueueCount)
+	probeNodeIdx := -1
+
 	for enqueueCount > 0 {
 		taskR := types.TaskReservation{
 			JobID:         jobId,
 			SchedulerAddr: ts.Addr,
 		}
-		queuePos := 0
+
+		// increment probeNodeIdx
+		probeNodeIdx = (probeNodeIdx + 1) % len(probeNodesList)
+		targetWorkerId := probeNodesList[probeNodeIdx]
 
 		ts.workerLock.Lock()
+		// TODO explore relaxing constraint that we send RPCs to distinct machines for the sake of concurrency and speed
+		//targetWorkerId := ts.workerAddresses[rand.Intn(len(ts.workerAddresses))]
 
-		// relax constraint that we send RPCs to distinct machines for the sake of concurrency and speed
-
-		// dynamically choose workerId. While holding onto the lock, make an RPC call to the client
-		targetWorkerId := ts.workerIds[rand.Intn(len(ts.workerIds))]
-		targetMonitor := ts.MonitorClientPool[targetWorkerId]
+		// check if targetMonitor is still a running monitor
+		targetMonitor, mExists := ts.MonitorClientPool[targetWorkerId]
 		ts.workerLock.Unlock()
 
+		if ! mExists {
+			continue
+		}
+
+		queuePos := 0
 		if e := targetMonitor.EnqueueReservation(taskR, &queuePos); e != nil {
 			fmt.Printf("[TaskScheduler %s: enqueueJob]: Failed to enqueue reservation on %s: %v\n",
 				ts.Addr, targetWorkerId, e)
@@ -390,13 +404,13 @@ func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
 		}
 
 		ts.workerLock.Lock()
-		_, exists := ts.workerIdToJobReservations[targetMonitor.Addr]
+		_, exists := ts.workerAddrToJobReservations[targetMonitor.Addr]
 		if ! exists {
-			ts.workerIdToJobReservations[targetMonitor.Addr] = make(map[string]int)
+			ts.workerAddrToJobReservations[targetMonitor.Addr] = make(map[string]int)
 		}
 
 		// targetMonitor.Addr has one more jobId in it's queue
-		ts.workerIdToJobReservations[targetMonitor.Addr][jobId] ++
+		ts.workerAddrToJobReservations[targetMonitor.Addr][jobId] ++
 		ts.workerLock.Unlock()
 
 		fmt.Printf("[TaskScheduler %s: enqueueJob]: Enqueuing reservation on monitor %s for job reservation %s\n",
@@ -408,3 +422,23 @@ func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
 	return nil
 }
 
+func (ts *TaskScheduler) selectEnqueueWorker(probeCount int) []string {
+
+	// TODO: maybe we can be more conservative with locks
+	ts.workerLock.Lock()
+	defer ts.workerLock.Unlock()
+
+	probeNodesList := make([]string, 0)
+
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(ts.workerAddresses), func(i, j int) {
+		ts.workerAddresses[i], ts.workerAddresses[j] = ts.workerAddresses[j], ts.workerAddresses[i]
+	})
+
+	for i := 0; i < probeCount; i++ {
+		targetWorkerId := ts.workerAddresses[i%len(ts.MonitorClientPool)]
+		probeNodesList = append(probeNodesList, targetWorkerId)
+	}
+
+	return probeNodesList
+}
