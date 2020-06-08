@@ -68,7 +68,7 @@ func main() {
 	numJobs := 20
 
 	jobList := make([]*types.Job, 20)
-	var sumOfTaskTimes float32 = 0
+	var sumOfTaskTimes float64 = 0
 
 	// populate jobList
 	for i := 0; i < numJobs; i++ {
@@ -77,7 +77,7 @@ func main() {
 		for j := 0; j < numTasks; j++ {
 			taskid := jobid + "-task" + strconv.Itoa(j)
 
-			taskTime := rand.Float32()
+			taskTime := rand.Float64()
 			sumOfTaskTimes += taskTime
 			task := types.Task{JobId: jobid, Id: taskid, T: taskTime}
 
@@ -96,7 +96,7 @@ func main() {
 	allJobsDoneSignal := make(chan bool)
 
 	// time taken by jobs
-	var timeTaken float32
+	var timeTaken float64
 
 	// run jobs
 	startTime := time.Now()
@@ -110,7 +110,7 @@ func main() {
 		for i := 0; i < numJobs; i++ {
 			fmt.Println("finished job: ", <-jobDoneChan)
 		}
-		timeTaken = float32(time.Since(startTime).Seconds())
+		timeTaken = time.Since(startTime).Seconds()
 		allJobsDoneSignal <- true
 	}()
 
@@ -150,7 +150,7 @@ func main() {
 
 
 	slotCount := len(rc.Executors) * rc.NumSlots
-	theoreticalLowerBound := sumOfTaskTimes / float32(slotCount)
+	theoreticalLowerBound := sumOfTaskTimes / float64(slotCount)
 
 	overhead := 100 * (timeTaken/theoreticalLowerBound - 1)
 
@@ -161,7 +161,7 @@ func main() {
 	writeToFile(rc, numJobs, numTasks, timeTaken, overhead)
 }
 
-func writeToFile(rc *config.PhoenixConfig, jobCount, taskCount int, timeTaken, overhead float32) error {
+func writeToFile(rc *config.PhoenixConfig, jobCount, taskCount int, timeTaken, overhead float64) error {
 	logName := "logs/" + strconv.Itoa(len(rc.Schedulers)) + "_sched:" + strconv.Itoa(len(rc.Monitors)) + "_mtor:" +
 		strconv.Itoa(rc.NumSlots) + "_slots" + strconv.Itoa(taskCount) + "_tasks.log"
 

@@ -10,7 +10,6 @@ type WorkerGod interface {
 }
 
 type FrontendInterface interface {
-
 	JobComplete(jobId string, ret *bool) error
 }
 
@@ -34,4 +33,3 @@ type TaskSchedulerInterface interface {
 	GetTask(taskRequest types.TaskRequest, task *types.Task) error
 	TaskComplete(msg types.WorkerTaskCompleteMsg, completeResult *bool) error
 }
-

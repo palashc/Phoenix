@@ -2,13 +2,14 @@ package scheduler
 
 import (
 	"fmt"
-	"github.com/samuel/go-zookeeper/zk"
 	"math/rand"
 	"phoenix"
 	"phoenix/monitor"
 	"phoenix/types"
 	"sync"
 	"time"
+
+	"github.com/samuel/go-zookeeper/zk"
 )
 
 const DefaultSampleRatio = 2
@@ -39,7 +40,7 @@ type TaskScheduler struct {
 	jobStatusLock sync.Mutex
 
 	// tasks left in a job
-	jobLeftTask   map[string]int
+	jobLeftTask map[string]int
 
 	// jobId to Job
 	jobMap     map[string]types.Job
@@ -53,7 +54,7 @@ type TaskScheduler struct {
 	//FrontEndClientPool map[int]
 
 	// zookeeper connection
-	zkConn 		*zk.Conn
+	zkConn *zk.Conn
 }
 
 var _ phoenix.TaskSchedulerInterface = new(TaskScheduler)
@@ -62,14 +63,14 @@ func NewTaskScheduler(addr string, zkHostPorts []string, frontendClientPool map[
 
 	ts := &TaskScheduler{
 		FrontendClientPool: frontendClientPool,
-		jobStatusLock:     sync.Mutex{},
-		jobStatus:         make(map[string]map[string]*types.TaskRecord),
-		jobLeftTask:       make(map[string]int),
-		jobMapLock:        sync.Mutex{},
-		jobMap:            make(map[string]types.Job),
-		taskToJobLock:     sync.Mutex{},
-		taskToJob:         make(map[string]string),
-		Addr:              addr,
+		jobStatusLock:      sync.Mutex{},
+		jobStatus:          make(map[string]map[string]*types.TaskRecord),
+		jobLeftTask:        make(map[string]int),
+		jobMapLock:         sync.Mutex{},
+		jobMap:             make(map[string]types.Job),
+		taskToJobLock:      sync.Mutex{},
+		taskToJob:          make(map[string]string),
+		Addr:               addr,
 
 		// map addresses to clients
 		MonitorClientPool:           make(map[string]*monitor.NodeMonitorClient),
@@ -85,7 +86,7 @@ func NewTaskScheduler(addr string, zkHostPorts []string, frontendClientPool map[
 	go ts.watchWorkerNodes(zkHostPorts, ready)
 
 	// wait for scheduler to find at least one living worker
-	<- ready
+	<-ready
 
 	return ts
 }
@@ -100,7 +101,7 @@ func (ts *TaskScheduler) watchWorkerNodes(zkHostPorts []string, ready chan bool)
 	}
 
 	workerNodeExists, _, err := ts.zkConn.Exists(phoenix.ZK_WORKER_NODE_PATH)
-	if ! workerNodeExists || err != nil {
+	if !workerNodeExists || err != nil {
 		_, e := ts.zkConn.Create(phoenix.ZK_WORKER_NODE_PATH, []byte{0}, 0, zk.WorldACL(zk.PermAll))
 		if e != nil {
 			fmt.Printf("Error: %v\n Could not create Worker Node Path node at %s\n", e, phoenix.ZK_WORKER_NODE_PATH)
@@ -123,7 +124,7 @@ func (ts *TaskScheduler) watchWorkerNodes(zkHostPorts []string, ready chan bool)
 		}
 
 		// wait for event
-		<- eventChannel
+		<-eventChannel
 	}
 
 }
@@ -339,12 +340,12 @@ func (ts *TaskScheduler) TaskComplete(msg types.WorkerTaskCompleteMsg, completeR
 		}
 
 		// Tell Frontend job has finished
-		go func (jId, feAddr string) {
+		go func(jId, feAddr string) {
 			var succ bool
 			if e := ts.FrontendClientPool[feAddr].JobComplete(jId, &succ); e != nil || !succ {
 				fmt.Printf("What's the error: %v\n", e)
 				fmt.Printf("[TaskScheduler: TaskComplete]: Error in telling frontend at %s that job %s has finished\n",
-						feAddr, jId)
+					feAddr, jId)
 			}
 		}(jobId, ts.jobMap[jobId].OwnerAddr)
 
@@ -378,6 +379,7 @@ func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
 		taskR := types.TaskReservation{
 			JobID:         jobId,
 			SchedulerAddr: ts.Addr,
+			SendTS:        time.Now(),
 		}
 
 		// increment probeNodeIdx
