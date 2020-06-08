@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"fmt"
+	"os"
 	"path"
 	"time"
 
@@ -32,6 +33,7 @@ type NodeMonitor struct {
 	slotCount        int
 	timeStats        *types.TimeStats
 	taskTime         map[string]time.Time
+	timeStatsLog     *os.File
 
 	// zookeeper connection
 	zkConn *zk.Conn
@@ -39,6 +41,11 @@ type NodeMonitor struct {
 
 func NewNodeMonitor(slotCount int, executorClient phoenix.ExecutorInterface,
 	schedulers map[string]phoenix.TaskSchedulerInterface, zkHostPorts []string, addr string) *NodeMonitor {
+
+	logFile, err := os.OpenFile("logs/monitor_time_stats_"+addr+".log", os.O_CREATE|os.O_WRONLY, 0777)
+	if err != nil {
+		fmt.Println("Could not open time stats log file")
+	}
 
 	nm := &NodeMonitor{
 		addr:             addr,
@@ -51,6 +58,7 @@ func NewNodeMonitor(slotCount int, executorClient phoenix.ExecutorInterface,
 		slotCount:        slotCount,
 		timeStats:        new(types.TimeStats),
 		taskTime:         make(map[string]time.Time),
+		timeStatsLog:     logFile,
 	}
 
 	nm.registerMonitorZK(zkHostPorts)
@@ -300,12 +308,7 @@ func (nm *NodeMonitor) taskLauncher() {
 		}
 
 		fmt.Println("[Monitor: TaskLauncher] About to attempt launch task, active tasks: ", nm.activeTasks)
-		fmt.Println("---------------")
-		fmt.Println(nm.timeStats.ReserveTime)
-		fmt.Println(nm.timeStats.QueueTime)
-		fmt.Println(nm.timeStats.GetTaskTime)
-		fmt.Println(nm.timeStats.ServiceTime)
-		fmt.Println("---------------")
+		nm.logTimeStats()
 		nm.attemptLaunchTask()
 
 		nm.launchCond.L.Unlock()
@@ -345,6 +348,15 @@ func (nm *NodeMonitor) registerMonitorZK(zkHostPorts []string) {
 		fmt.Println("[NodeMonitor: registerMonitorZK] Unable to create znode!")
 		panic(err)
 	}
+}
+
+func (nm *NodeMonitor) logTimeStats() {
+	nm.timeStatsLog.WriteString("---------------\n")
+	nm.timeStatsLog.WriteString(fmt.Sprint(nm.timeStats.ReserveTime) + "\n")
+	nm.timeStatsLog.WriteString(fmt.Sprint(nm.timeStats.QueueTime) + "\n")
+	nm.timeStatsLog.WriteString(fmt.Sprint(nm.timeStats.GetTaskTime) + "\n")
+	nm.timeStatsLog.WriteString(fmt.Sprint(nm.timeStats.ServiceTime) + "\n")
+	nm.timeStatsLog.WriteString("---------------\n")
 }
 
 var _ phoenix.MonitorInterface = new(NodeMonitor)
