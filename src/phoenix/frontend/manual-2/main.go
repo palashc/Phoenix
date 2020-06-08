@@ -65,7 +65,7 @@ func main() {
 
 	// TODO: randomize number of jobs or tasks
 	numTasks := 10
-	numJobs := 10
+	numJobs := 20
 
 	jobList := make([]*types.Job, 20)
 	var sumOfTaskTimes float32 = 0
@@ -120,6 +120,7 @@ func main() {
 			panic(e)
 		}
 		fmt.Println("Killed workerId:", i)
+		time.Sleep(1 * time.Second)
 
 		workersKilled = append(workersKilled, i)
 	}
@@ -128,13 +129,14 @@ func main() {
 	time.Sleep(ZK_DETECT_TIME)
 
 	// bring workers back
-	//for _, id := range workersKilled {
-	//	var ret bool
-	//	if e := workerGodClient.Start(id, &ret); e != nil || !ret {
-	//		panic(e)
-	//	}
-	//	fmt.Println("Brought back workerId:", id)
-	//}
+	for _, id := range workersKilled {
+		var ret bool
+		if e := workerGodClient.Start(id, &ret); e != nil || !ret {
+			panic(e)
+		}
+		fmt.Println("Brought back workerId:", id)
+		time.Sleep(1 * time.Second)
+	}
 
 	// sleep for Kills to take affect
 	time.Sleep(ZK_DETECT_TIME)
