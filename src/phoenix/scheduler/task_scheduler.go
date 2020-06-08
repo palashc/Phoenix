@@ -2,13 +2,14 @@ package scheduler
 
 import (
 	"fmt"
-	"github.com/samuel/go-zookeeper/zk"
 	"math/rand"
 	"phoenix"
 	"phoenix/monitor"
 	"phoenix/types"
 	"sync"
 	"time"
+
+	"github.com/samuel/go-zookeeper/zk"
 )
 
 const DefaultSampleRatio = 2
@@ -343,6 +344,7 @@ func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
 		taskR := types.TaskReservation{
 			JobID:         jobId,
 			SchedulerAddr: ts.Addr,
+			SendTS:        time.Now(),
 		}
 		queuePos := 0
 

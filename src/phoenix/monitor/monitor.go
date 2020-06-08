@@ -2,7 +2,9 @@ package monitor
 
 import (
 	"fmt"
+	"os"
 	"path"
+	"time"
 
 	"phoenix"
 	"phoenix/types"
@@ -12,6 +14,8 @@ import (
 
 	"sync"
 )
+
+const timeStatsUnit = time.Microsecond
 
 type NodeMonitor struct {
 	addr             string
@@ -27,6 +31,9 @@ type NodeMonitor struct {
 	jobSchedulerMap  map[string]string
 	launchCond       *sync.Cond
 	slotCount        int
+	timeStats        *types.TimeStats
+	taskTime         map[string]time.Time
+	timeStatsLog     *os.File
 
 	// zookeeper connection
 	zkConn *zk.Conn
@@ -34,6 +41,11 @@ type NodeMonitor struct {
 
 func NewNodeMonitor(slotCount int, executorClient phoenix.ExecutorInterface,
 	schedulers map[string]phoenix.TaskSchedulerInterface, zkHostPorts []string, addr string) *NodeMonitor {
+
+	logFile, err := os.OpenFile("logs/monitor_time_stats_"+addr+".log", os.O_CREATE|os.O_WRONLY, 0777)
+	if err != nil {
+		fmt.Println("Could not open time stats log file")
+	}
 
 	nm := &NodeMonitor{
 		addr:             addr,
@@ -44,6 +56,9 @@ func NewNodeMonitor(slotCount int, executorClient phoenix.ExecutorInterface,
 		executorClient:   executorClient,
 		launchCond:       sync.NewCond(&sync.Mutex{}),
 		slotCount:        slotCount,
+		timeStats:        new(types.TimeStats),
+		taskTime:         make(map[string]time.Time),
+		timeStatsLog:     logFile,
 	}
 
 	nm.registerMonitorZK(zkHostPorts)
@@ -61,6 +76,8 @@ Otherwise, adds the reservation to the queue.
 */
 func (nm *NodeMonitor) EnqueueReservation(taskReservation types.TaskReservation, position *int) error {
 
+	now := time.Now()
+
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
 
@@ -69,6 +86,8 @@ func (nm *NodeMonitor) EnqueueReservation(taskReservation types.TaskReservation,
 
 	fmt.Println("[Monitor: EnqueueReservation]: queue length", nm.queue.Len())
 
+	taskReservation.RecvTS = now
+	nm.timeStats.ReserveTime = append(nm.timeStats.ReserveTime, float64(now.Sub(taskReservation.SendTS)/timeStatsUnit))
 	nm.queue.Enqueue(taskReservation)
 
 	fmt.Println("[Monitor: EnqueueReservation]: Signalling launch condition")
@@ -98,10 +117,16 @@ On a taskComplete() rpc from the executor, calla taskComplete on the scheduler.
 Also, attempt to run the next task from the queue.
 */
 func (nm *NodeMonitor) TaskComplete(taskID string, ret *bool) error {
+
+	now := time.Now()
 	//fmt.Println("task done ", taskID)
 	nm.lock.Lock()
 	defer nm.lock.Unlock()
 
+	taskStartTime, ok := nm.taskTime[taskID]
+	if ok {
+		nm.timeStats.ServiceTime = append(nm.timeStats.ServiceTime, float64(now.Sub(taskStartTime)/timeStatsUnit))
+	}
 	fmt.Printf("[Monitor: TaskComplete]: task %s marked as complete\n", taskID)
 
 	//get the scheduler for the task
@@ -201,6 +226,7 @@ func (nm *NodeMonitor) launchTask(task types.Task, reservation types.TaskReserva
 
 	// fmt.Println("[Monitor: launchTask]: Now calling executor to launch ", task)
 	var ret bool
+	now := time.Now()
 	err := nm.executorClient.LaunchTask(task, &ret)
 
 	// fmt.Println("[Monitor: launchTask] Just launched task: ", task)
@@ -212,6 +238,7 @@ func (nm *NodeMonitor) launchTask(task types.Task, reservation types.TaskReserva
 		return fmt.Errorf("[LaunchTask] Unable to launch task, executor returned false")
 	}
 
+	nm.taskTime[task.Id] = now
 	nm.taskSchedulerMap[task.Id] = reservation.SchedulerAddr
 
 	nm.activeTasks++
@@ -224,6 +251,7 @@ Blocks till a reservation is present in the queue, and then launches it.
 */
 func (nm *NodeMonitor) attemptLaunchTask() {
 
+	now := time.Now()
 	_taskR := nm.queue.Dequeue()
 
 	//check if taskR has a reservation for a task which was not cancelled
@@ -233,6 +261,7 @@ func (nm *NodeMonitor) attemptLaunchTask() {
 			if taskR.IsNotEmpty() {
 				// fmt.Printf("[Monitor: attemptLaunchTask]: launching %s\n", taskR.JobID)
 				// TODO: Parallelize with goroutines
+				nm.timeStats.QueueTime = append(nm.timeStats.QueueTime, float64(now.Sub(taskR.RecvTS)/timeStatsUnit))
 				err := nm.getAndLaunchTask(taskR)
 				if err != nil {
 					panic("Unable to launch next task")
@@ -247,7 +276,9 @@ Helper method to get a task and launch it
 */
 func (nm *NodeMonitor) getAndLaunchTask(taskReservation types.TaskReservation) error {
 
+	t1 := time.Now()
 	task, err := nm.getTask(taskReservation)
+	nm.timeStats.GetTaskTime = append(nm.timeStats.GetTaskTime, float64(time.Now().Sub(t1)/timeStatsUnit))
 	if err != nil {
 		return fmt.Errorf("[NM] Unable to get task %v from scheduler: %q", taskReservation.JobID, err)
 	}
@@ -277,7 +308,7 @@ func (nm *NodeMonitor) taskLauncher() {
 		}
 
 		fmt.Println("[Monitor: TaskLauncher] About to attempt launch task, active tasks: ", nm.activeTasks)
-		// fmt.Println("[Monitor: TaskLauncher] queueSize: ", nm.queue.Len())
+		nm.logTimeStats()
 		nm.attemptLaunchTask()
 
 		nm.launchCond.L.Unlock()
@@ -317,6 +348,15 @@ func (nm *NodeMonitor) registerMonitorZK(zkHostPorts []string) {
 		fmt.Println("[NodeMonitor: registerMonitorZK] Unable to create znode!")
 		panic(err)
 	}
+}
+
+func (nm *NodeMonitor) logTimeStats() {
+	nm.timeStatsLog.WriteString("---------------\n")
+	nm.timeStatsLog.WriteString(fmt.Sprint(nm.timeStats.ReserveTime) + "\n")
+	nm.timeStatsLog.WriteString(fmt.Sprint(nm.timeStats.QueueTime) + "\n")
+	nm.timeStatsLog.WriteString(fmt.Sprint(nm.timeStats.GetTaskTime) + "\n")
+	nm.timeStatsLog.WriteString(fmt.Sprint(nm.timeStats.ServiceTime) + "\n")
+	nm.timeStatsLog.WriteString("---------------\n")
 }
 
 var _ phoenix.MonitorInterface = new(NodeMonitor)
