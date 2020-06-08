@@ -7,17 +7,17 @@ type TaskID string
 type Task struct {
 	JobId string
 	Id    string
-	T     float32
+	T     float64
 }
 
 type TaskRequest struct {
-	Task 	 	*Task
-	WorkerAddr	string
+	Task       *Task
+	WorkerAddr string
 }
 
 type WorkerTaskCompleteMsg struct {
-	TaskID 		string
-	WorkerAddr	string
+	TaskID     string
+	WorkerAddr string
 }
 
 type TaskRecord struct {

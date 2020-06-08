@@ -29,7 +29,7 @@ type NodeMonitor struct {
 	slotCount        int
 
 	// zookeeper connection
-	zkConn			*zk.Conn
+	zkConn *zk.Conn
 }
 
 func NewNodeMonitor(slotCount int, executorClient phoenix.ExecutorInterface,
@@ -65,7 +65,7 @@ func (nm *NodeMonitor) EnqueueReservation(taskReservation types.TaskReservation,
 	defer nm.lock.Unlock()
 
 	fmt.Printf("[Monitor: EnqueueReservation]: adding task reservation for job: %s to queue\n",
-			taskReservation.JobID)
+		taskReservation.JobID)
 
 	fmt.Println("[Monitor: EnqueueReservation]: queue length", nm.queue.Len())
 
@@ -113,7 +113,6 @@ func (nm *NodeMonitor) TaskComplete(taskID string, ret *bool) error {
 		return fmt.Errorf("[TaskComplete] Task %v not found", taskID)
 	}
 
-
 	fmt.Printf("[Monitor: TaskComplete] Task %v found\n", taskID)
 
 	//notify scheduler about task completion
@@ -128,7 +127,7 @@ func (nm *NodeMonitor) TaskComplete(taskID string, ret *bool) error {
 	// fmt.Println("[Monitor: TaskComplete] hitting TaskComplete on schedulerClient")
 	var succ bool
 	err := schedulerClient.TaskComplete(types.WorkerTaskCompleteMsg{
-		TaskID: taskID,
+		TaskID:     taskID,
 		WorkerAddr: nm.addr,
 	}, &succ)
 
@@ -253,7 +252,7 @@ func (nm *NodeMonitor) getAndLaunchTask(taskReservation types.TaskReservation) e
 		return fmt.Errorf("[NM] Unable to get task %v from scheduler: %q", taskReservation.JobID, err)
 	}
 
-	 // fmt.Println("[Monitor getAndLaunchTask]: Task fetched", taskReservation, task)
+	// fmt.Println("[Monitor getAndLaunchTask]: Task fetched", taskReservation, task)
 
 	if task != nil && task.T > 0 {
 		err = nm.launchTask(*task, taskReservation)
@@ -299,7 +298,7 @@ func (nm *NodeMonitor) registerMonitorZK(zkHostPorts []string) {
 	}
 
 	workerNodeExists, _, err := nm.zkConn.Exists(phoenix.ZK_WORKER_NODE_PATH)
-	if ! workerNodeExists || err != nil {
+	if !workerNodeExists || err != nil {
 		_, e := nm.zkConn.Create(phoenix.ZK_WORKER_NODE_PATH, []byte{0}, 0, zk.WorldACL(zk.PermAll))
 		if e != nil {
 			fmt.Printf("Error: %v\n Could not create Worker Node Path node at %s\n", e, phoenix.ZK_WORKER_NODE_PATH)

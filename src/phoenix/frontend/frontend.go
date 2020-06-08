@@ -12,7 +12,7 @@ import (
 const ProcessJobsThreads = 4
 
 type Frontend struct {
-	Addr 	string
+	Addr string
 
 	SchedulerClients []phoenix.TaskSchedulerInterface
 
@@ -33,12 +33,12 @@ type Frontend struct {
 
 func NewFrontend(addr string, schedulerClients []phoenix.TaskSchedulerInterface, jobDoneChan chan string) (phoenix.FrontendInterface, chan *types.Job) {
 	fe := &Frontend{
-		Addr: addr,
+		Addr:             addr,
 		SchedulerClients: schedulerClients,
-		jobIdToJob: make(map[string]*types.Job),
-		jobStatus: make(map[string]bool),
-		sendJobChan: make(chan *types.Job, ProcessJobsThreads),
-		jobFinishedChan: jobDoneChan,
+		jobIdToJob:       make(map[string]*types.Job),
+		jobStatus:        make(map[string]bool),
+		sendJobChan:      make(chan *types.Job, ProcessJobsThreads),
+		jobFinishedChan:  jobDoneChan,
 	}
 
 	for i := 0; i < ProcessJobsThreads; i++ {
@@ -50,7 +50,7 @@ func NewFrontend(addr string, schedulerClients []phoenix.TaskSchedulerInterface,
 
 func (fe *Frontend) processJobs() {
 	for {
-		newJob := <- fe.sendJobChan
+		newJob := <-fe.sendJobChan
 		fe.lock.Lock()
 
 		scheduler := fe.selectRandScheduler()

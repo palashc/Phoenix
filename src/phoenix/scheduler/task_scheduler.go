@@ -17,16 +17,16 @@ type TaskScheduler struct {
 	Addr string
 
 	// map of addresses to Monitors that we are able to contact
-	MonitorClientPool 	map[string]phoenix.MonitorInterface
+	MonitorClientPool map[string]phoenix.MonitorInterface
 
 	// addresses of our workers
-	workerIds 			[]string
+	workerIds []string
 
 	// map of worker address to current tasks assigned to worker
-	workerIdToTask 		map[string]map[string]bool
+	workerIdToTask map[string]map[string]bool
 
 	// lock around MonitorClientPool, workerIds, and workerIdToTask
-	workerLock	sync.Mutex
+	workerLock sync.Mutex
 
 	// Frontend Client Pool
 	FrontendClientPool map[string]phoenix.FrontendInterface
@@ -36,7 +36,7 @@ type TaskScheduler struct {
 	jobStatusLock sync.Mutex
 
 	// tasks left in a job
-	jobLeftTask   map[string]int
+	jobLeftTask map[string]int
 
 	// jobId to Job
 	jobMap     map[string]types.Job
@@ -50,7 +50,7 @@ type TaskScheduler struct {
 	//FrontEndClientPool map[int]
 
 	// zookeeper connection
-	zkConn 		*zk.Conn
+	zkConn *zk.Conn
 }
 
 var _ phoenix.TaskSchedulerInterface = new(TaskScheduler)
@@ -59,21 +59,20 @@ func NewTaskScheduler(addr string, zkHostPorts []string, frontendClientPool map[
 
 	ts := &TaskScheduler{
 		FrontendClientPool: frontendClientPool,
-		jobStatusLock:     sync.Mutex{},
-		jobStatus:         make(map[string]map[string]*types.TaskRecord),
-		jobLeftTask:       make(map[string]int),
-		jobMapLock:        sync.Mutex{},
-		jobMap:            make(map[string]types.Job),
-		taskToJobLock:     sync.Mutex{},
-		taskToJob:         make(map[string]string),
-		Addr:              addr,
+		jobStatusLock:      sync.Mutex{},
+		jobStatus:          make(map[string]map[string]*types.TaskRecord),
+		jobLeftTask:        make(map[string]int),
+		jobMapLock:         sync.Mutex{},
+		jobMap:             make(map[string]types.Job),
+		taskToJobLock:      sync.Mutex{},
+		taskToJob:          make(map[string]string),
+		Addr:               addr,
 
 		// map addresses to clients
-		MonitorClientPool: 	make(map[string]phoenix.MonitorInterface, 0),
-		workerIds: 			[]string{},
-		workerIdToTask: 	make(map[string]map[string]bool),
-		workerLock: 		sync.Mutex{},
-
+		MonitorClientPool: make(map[string]phoenix.MonitorInterface, 0),
+		workerIds:         []string{},
+		workerIdToTask:    make(map[string]map[string]bool),
+		workerLock:        sync.Mutex{},
 	}
 
 	ready := make(chan bool)
@@ -82,7 +81,7 @@ func NewTaskScheduler(addr string, zkHostPorts []string, frontendClientPool map[
 	go ts.watchWorkerNodes(zkHostPorts, ready)
 
 	// wait for scheduler to find at least one living worker
-	<- ready
+	<-ready
 
 	return ts
 }
@@ -97,7 +96,7 @@ func (ts *TaskScheduler) watchWorkerNodes(zkHostPorts []string, ready chan bool)
 	}
 
 	workerNodeExists, _, err := ts.zkConn.Exists(phoenix.ZK_WORKER_NODE_PATH)
-	if ! workerNodeExists || err != nil {
+	if !workerNodeExists || err != nil {
 		_, e := ts.zkConn.Create(phoenix.ZK_WORKER_NODE_PATH, []byte{0}, 0, zk.WorldACL(zk.PermAll))
 		if e != nil {
 			fmt.Printf("Error: %v\n Could not create Worker Node Path node at %s\n", e, phoenix.ZK_WORKER_NODE_PATH)
@@ -120,7 +119,7 @@ func (ts *TaskScheduler) watchWorkerNodes(zkHostPorts []string, ready chan bool)
 		}
 
 		// wait for event
-		<- eventChannel
+		<-eventChannel
 	}
 
 }
@@ -235,7 +234,7 @@ func (ts *TaskScheduler) GetTask(jobId string, taskRequest *types.TaskRequest) e
 
 		// pendingTask is now inflight at workerIdToTask
 		_, exists := ts.workerIdToTask[taskRequest.WorkerAddr]
-		if ! exists {
+		if !exists {
 			ts.workerIdToTask[taskRequest.WorkerAddr] = make(map[string]bool)
 		}
 
@@ -306,12 +305,12 @@ func (ts *TaskScheduler) TaskComplete(msg types.WorkerTaskCompleteMsg, completeR
 		}
 
 		// Tell Frontend job has finished
-		go func (jId, feAddr string) {
+		go func(jId, feAddr string) {
 			var succ bool
 			if e := ts.FrontendClientPool[feAddr].JobComplete(jId, &succ); e != nil || !succ {
 				fmt.Printf("What's the error: %v\n", e)
 				fmt.Printf("[TaskScheduler: TaskComplete]: Error in telling frontend at %s that job %s has finished\n",
-						feAddr, jId)
+					feAddr, jId)
 			}
 		}(jobId, ts.jobMap[jobId].OwnerAddr)
 
@@ -400,6 +399,3 @@ func (ts *TaskScheduler) selectEnqueueWorker(probeCount int) []string {
 	// fmt.Println("[TaskScheduler: selectEnqueueWorker]: workerLock released")
 	return probeNodesList
 }
-
-
-
