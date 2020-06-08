@@ -33,12 +33,19 @@ type TaskSchedulerConfig struct {
 	Ready         chan bool
 }
 
+type WorkerGodConfig struct {
+	Addr          string
+	WorkerGod 	  phoenix.WorkerGod
+	Ready         chan bool
+}
+
 type PhoenixConfig struct {
 	NumSlots   int
 	Frontends  []string
 	Schedulers []string
 	Monitors   []string
 	Executors  []string
+	WorkerGods []string
 }
 
 func (pc *PhoenixConfig) NewFrontendConfig(i int, fe phoenix.FrontendInterface) *FrontendConfig {
@@ -69,6 +76,14 @@ func (pc *PhoenixConfig) NewExecutorConfig(i int, ec phoenix.ExecutorInterface) 
 	return &ExecutorConfig{
 		Addr:     pc.Executors[i],
 		Executor: ec,
+		Ready:    make(chan bool, 1),
+	}
+}
+
+func (pc *PhoenixConfig) NewWorkerGodConfig(i int, ec phoenix.WorkerGod) *WorkerGodConfig {
+	return &WorkerGodConfig{
+		Addr:     pc.WorkerGods[i],
+		WorkerGod: ec,
 		Ready:    make(chan bool, 1),
 	}
 }

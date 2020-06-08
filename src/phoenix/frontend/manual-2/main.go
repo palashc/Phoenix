@@ -10,6 +10,7 @@ import (
 	"phoenix/frontend"
 	"phoenix/scheduler"
 	"phoenix/types"
+	workerGod "phoenix/worker-god"
 	"strconv"
 	"time"
 )
@@ -22,13 +23,28 @@ func noError(e error) {
 	}
 }
 
+const ZK_DETECT_TIME = 3 * time.Second
+
 func main() {
 	flag.Parse()
 
 	rc, e := config.LoadConfig(*frc)
 	noError(e)
 
-	fmt.Println("Parsed main")
+	// create just one workerGodClient for single-node configuration
+	workerGodClient := workerGod.GetNewClient(rc.WorkerGods[0])
+
+	// spawn new monitors and executors
+	for i := range rc.Monitors {
+		var ret bool
+		if e := workerGodClient.Start(i, &ret); e != nil || !ret {
+			panic(e)
+		}
+	}
+	// sleep for enough time for zookeeper to find monitors
+	time.Sleep(ZK_DETECT_TIME)
+
+	fmt.Println("Instantiated Monitors and Executors")
 
 	schedulerClients := make([]phoenix.TaskSchedulerInterface, 0)
 	for _, schedulerAddr := range rc.Schedulers {
@@ -49,7 +65,7 @@ func main() {
 
 	// TODO: randomize number of jobs or tasks
 	numTasks := 10
-	numJobs := 5
+	numJobs := 10
 
 	jobList := make([]*types.Job, 20)
 	var sumOfTaskTimes float32 = 0
@@ -77,6 +93,8 @@ func main() {
 		}
 	}
 
+	allJobsDoneSignal := make(chan bool)
+
 	// run jobs
 	startTime := time.Now()
 	for i := 0; i < numJobs; i++ {
@@ -85,9 +103,44 @@ func main() {
 	}
 
 	// wait for all jobs to end
-	for i := 0; i < numJobs; i++ {
-		<-jobDoneChan
+	go func() {
+		for i := 0; i < numJobs; i++ {
+			fmt.Println("finished job: ", <-jobDoneChan)
+		}
+		allJobsDoneSignal <- true
+	}()
+
+	time.Sleep(ZK_DETECT_TIME)
+
+	// randomly kill and spawn monitors
+	workersKilled := make([]int,0)
+	for i := 0; len(rc.Monitors) - len(workersKilled) > 1; i++ {
+		var ret bool
+		if e := workerGodClient.Kill(i, &ret); e != nil || !ret {
+			panic(e)
+		}
+		fmt.Println("Killed workerId:", i)
+
+		workersKilled = append(workersKilled, i)
 	}
+
+	// sleep for Kills to take affect
+	time.Sleep(ZK_DETECT_TIME)
+
+	// bring workers back
+	//for _, id := range workersKilled {
+	//	var ret bool
+	//	if e := workerGodClient.Start(id, &ret); e != nil || !ret {
+	//		panic(e)
+	//	}
+	//	fmt.Println("Brought back workerId:", id)
+	//}
+
+	// sleep for Kills to take affect
+	time.Sleep(ZK_DETECT_TIME)
+
+	fmt.Println("Done Sleeping")
+	<- allJobsDoneSignal
 
 	timeTaken := float32(time.Since(startTime).Seconds())
 

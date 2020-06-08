@@ -11,7 +11,7 @@ type Task struct {
 }
 
 type TaskRequest struct {
-	Task 	 	*Task
+	JobId 	 	string
 	WorkerAddr	string
 }
 
