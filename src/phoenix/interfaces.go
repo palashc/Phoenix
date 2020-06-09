@@ -4,6 +4,11 @@ import (
 	"phoenix/types"
 )
 
+type WorkerGod interface {
+	Kill(workerId int, ret *bool) error
+	Start(workerId int, ret *bool) error
+}
+
 type FrontendInterface interface {
 	JobComplete(jobId string, ret *bool) error
 }
@@ -25,6 +30,6 @@ type MonitorInterface interface {
 
 type TaskSchedulerInterface interface {
 	SubmitJob(job types.Job, submitResult *bool) error
-	GetTask(jobId string, taskRequest *types.TaskRequest) error
+	GetTask(taskRequest types.TaskRequest, task *types.Task) error
 	TaskComplete(msg types.WorkerTaskCompleteMsg, completeResult *bool) error
 }

@@ -29,8 +29,10 @@ func main() {
 	phoenixConfig.Monitors = make([]string, *nMonitors)
 	phoenixConfig.NumSlots = *nSlots
 
-	// same number of executors as monitors
+	// same number of and workerGods executors as monitors
 	phoenixConfig.Executors = make([]string, *nMonitors)
+	phoenixConfig.WorkerGods = make([]string, *nMonitors)
+
 
 	ipAddrs := strings.Split(*ips, ",")
 	if nMachine := len(ipAddrs); nMachine > 0 {
@@ -43,9 +45,14 @@ func main() {
 		for i := 0; i < *nMonitors; i++ {
 			host := fmt.Sprintf("%s", ipAddrs[i%nMachine])
 			phoenixConfig.Monitors[i] = fmt.Sprintf("%s:%d", host, p)
+			p++
 
 			// run Executors on same machine as monitors
-			phoenixConfig.Executors[i] = fmt.Sprintf("%s:%d", host, p+1000)
+			phoenixConfig.Executors[i] = fmt.Sprintf("%s:%d", host, p)
+			p++
+
+			// run WorkerGod on same machine as monitors
+			phoenixConfig.WorkerGods[i] = fmt.Sprintf("%s:%d", host, p)
 			p++
 		}
 

@@ -34,7 +34,7 @@ func main() {
 	rc, e := config.LoadConfig(*frc)
 	noError(e)
 
-	fmt.Println("Parsed main")
+	fmt.Println("Instantiated Monitors and Executors")
 
 	schedulerClients := make([]phoenix.TaskSchedulerInterface, 0)
 	for _, schedulerAddr := range rc.Schedulers {
@@ -96,6 +96,11 @@ func main() {
 		}
 	}
 
+	allJobsDoneSignal := make(chan bool)
+
+	// time taken by jobs
+	var timeTaken float64
+
 	// run jobs
 	startTime := time.Now()
 	for i := 0; i < numJobs; i++ {
@@ -104,11 +109,19 @@ func main() {
 	}
 
 	// wait for all jobs to end
-	for i := 0; i < numJobs; i++ {
-		<-jobDoneChan
-	}
+	go func() {
+		for i := 0; i < numJobs; i++ {
+			fmt.Println("finished job: ", <-jobDoneChan)
+		}
 
-	timeTaken := time.Since(startTime).Seconds()
+		// set time taken
+		timeTaken = float64(time.Since(startTime).Seconds())
+		allJobsDoneSignal <- true
+	}()
+
+	// We can use worker-god to start or kill more jobs here
+
+	<- allJobsDoneSignal
 
 	slotCount := len(rc.Executors) * rc.NumSlots
 	theoreticalLowerBound := sumOfTaskTimes / float64(slotCount)

@@ -13,6 +13,9 @@ import (
 
 var frc = flag.String("conf", config.DefaultConfigPath, "config file")
 
+// if -1, run all workers
+var workerId = flag.Int("workerId", -1, "which workerId to run")
+
 func noError(e error) {
 	if e != nil {
 		log.Fatal(e)
@@ -49,14 +52,15 @@ func main() {
 		noError(monitor.ServeMonitor(mConfig))
 	}
 
-	n := 0
-
-	for i, _ := range rc.Monitors {
-		go run(i)
-		n++
+	// run all monitors
+	if *workerId == -1 {
+		for i, _ := range rc.Monitors {
+			go run(i)
+		}
+	} else {
+		run(*workerId)
 	}
 
-	if n > 0 {
-		select {}
-	}
+	select {}
+
 }
