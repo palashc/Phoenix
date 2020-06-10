@@ -77,7 +77,7 @@ func main() {
 		for j := 0; j < numTasks; j++ {
 			taskid := jobid + "-task" + strconv.Itoa(j)
 
-			taskTime := rand.Float64() / 10
+			taskTime := rand.Float64()
 			sumOfTaskTimes += taskTime
 			task := types.Task{JobId: jobid, Id: taskid, T: taskTime}
 
