@@ -70,9 +70,9 @@ func main() {
 		rand.Seed(localRandSeed)
 	}
 
-	var gGenerator GoogleClusterTaskGenerator
+	var gGenerator frontend.GoogleClusterTaskGenerator
 	if *gEmulation {
-		gGenerator = NewGoogleClusterTaskGenerator(*meanDuration, *randSeed, *taskCount)
+		gGenerator = frontend.NewGoogleClusterTaskGenerator(*meanDuration, *randSeed, *taskCount)
 	}
 
 	numTasks := *taskCount

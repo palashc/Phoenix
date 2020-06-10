@@ -15,12 +15,21 @@ import (
 	"time"
 )
 
-var frc = flag.String("conf", config.DefaultConfigPath, "config file")
-var killableWorkers = flag.Int("n", 1, "maximum number of workers to kill")
-var recoverFlag = flag.Bool("r", false, "Recover killed workers?")
-var workloadFlag = flag.String("w", "small", "Size of workload - small, medium, big")
-var seed = flag.Int64("seed", 0, "seed for random task durations")
-var meanDuration = flag.Float64("tasktime", 1.0, "job duration in second")
+const DefaultRandSeed int64 = -13131313
+
+var (
+	frc          = flag.String("conf", config.DefaultConfigPath, "config file")
+	useRand      = flag.Bool("useRand", false, "use random seed to generate job, default to hash based on address")
+	jobCount     = flag.Int("jobCount", 10, "number of job to generate")
+	taskCount    = flag.Int("taskCount", 10, "number of task in a job")
+    meanDuration = flag.Float64("tasktime", 1.0, "task duration in second")
+	seed         = flag.Int64("seed", DefaultRandSeed, "task generation seed")
+	gEmulation   = flag.Bool("gEmu", false, "use google cluster workload pattern")
+
+    killableWorkers = flag.Int("n", 1, "maximum number of workers to kill")
+    recoverFlag = flag.Bool("r", false, "Recover killed workers?")
+    workloadFlag = flag.String("w", "small", "Size of workload - small, medium, big")
+)
 
 func noError(e error) {
 	if e != nil {
@@ -53,7 +62,7 @@ func main() {
 	// create just one workerGodClient for single-node configuration
 	var workerGodClients []phoenix.WorkerGod
 	for i := 0; i < len(rc.WorkerGods); i++ {
-		workerGodClients[i] = workerGod.GetNewClient(rc.WorkerGods[i])
+		workerGodClients = append(workerGodClients, workerGod.GetNewClient(rc.WorkerGods[i]))
 	}
 
 	// spawn new monitors and executors
@@ -85,25 +94,51 @@ func main() {
 	go frontend.ServeFrontend(feConfig)
 	<-feConfig.Ready
 
+	if *useRand {
+		// The case where we did not pass in a seed but still want to be rand
+		if *seed == DefaultRandSeed {
+			rand.Seed(time.Now().UnixNano())
+		} else {
+			rand.Seed(*seed)
+		}
+	} else {
+		// just some random number here for the purpose of predictable workload emulation
+		var localRandSeed int64 = 1111
+		rand.Seed(localRandSeed)
+	}
+
+	var gGenerator frontend.GoogleClusterTaskGenerator
+	if *gEmulation {
+		gGenerator = frontend.NewGoogleClusterTaskGenerator(*meanDuration, *seed, *taskCount)
+	}
+
 	// TODO: randomize number of jobs or tasks
 	numTasks := workload[1]
 	numJobs := workload[0]
 
 	jobList := make([]*types.Job, numJobs)
 	var sumOfTaskTimes float64 = 0
-	s1 := rand.NewSource(*seed)
-	r1 := rand.New(s1)
 
 	// populate jobList
 	for i := 0; i < numJobs; i++ {
 		jobid := "job" + strconv.Itoa(i)
 		tasks := make([]types.Task, 0)
-		taskTime := *meanDuration
-		taskTime *= r1.ExpFloat64()
+
+		currTaskDuration := *meanDuration
+
+		if *useRand {
+			currTaskDuration *= rand.ExpFloat64()
+		}
+
+		if *gEmulation {
+			currTaskDuration = gGenerator.GetTaskDuration()
+		}
+
 		for j := 0; j < numTasks; j++ {
 			taskid := jobid + "-task" + strconv.Itoa(j)
-			sumOfTaskTimes += taskTime
-			task := types.Task{JobId: jobid, Id: taskid, T: taskTime}
+
+			sumOfTaskTimes += currTaskDuration
+			task := types.Task{JobId: jobid, Id: taskid, T: currTaskDuration}
 
 			tasks = append(tasks, task)
 		}
@@ -126,6 +161,7 @@ func main() {
 	startTime := time.Now()
 	for i := 0; i < numJobs; i++ {
 		// TODO: does using go routines here improve performance?
+        fmt.Println("Sending job: ", jobList[i])
 		sendJobsChan <- jobList[i]
 	}
 
@@ -204,4 +240,3 @@ func writeToFile(rc *config.PhoenixConfig, jobCount, taskCount int, timeTaken, o
 		jobCount, taskCount, timeTaken, overhead))
 	fout.Close()
 	return nil
-}

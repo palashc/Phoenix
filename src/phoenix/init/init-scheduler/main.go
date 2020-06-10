@@ -8,7 +8,6 @@ import (
 	"phoenix/config"
 	"phoenix/frontend"
 
-	//"phoenix/executor"
 	"phoenix/monitor"
 	"phoenix/scheduler"
 )
@@ -24,6 +23,7 @@ func noError(e error) {
 }
 
 func main() {
+	fmt.Println("HELLOOO")
 	flag.Parse()
 
 	rc, e := config.LoadConfig(*frc)
@@ -38,7 +38,8 @@ func main() {
 	for _, frontendAddr := range rc.Frontends {
 		frontendClientMap[frontendAddr] = frontend.GetNewClient(frontendAddr)
 	}
-
+        
+        fmt.Println("OKOK")
 	run := func(i int) {
 		if i > len(rc.Monitors) {
 			noError(fmt.Errorf("index out of range: %d", i))
@@ -53,6 +54,8 @@ func main() {
 		noError(scheduler.ServeTaskScheduler(sConfig))
 	}
 
+        fmt.Println("After run def")
+
 	n := 0
 
 	for i, _ := range rc.Schedulers {
@@ -63,4 +66,5 @@ func main() {
 	if n > 0 {
 		select {}
 	}
+
 }
