@@ -3,7 +3,6 @@ package worker_god
 import (
 	"bufio"
 	"fmt"
-	"github.com/pkg/errors"
 	"io"
 	"os"
 	"os/exec"
@@ -11,24 +10,29 @@ import (
 	"phoenix/config"
 	"strconv"
 	"time"
-)
 
+	"github.com/pkg/errors"
+)
 
 type WorkerWrapper struct {
 
 	// map where key is worker index and value is processId for that worker
-	RunningMonitors 	map[int] *exec.Cmd
-	RunningExecutors 	map[int] *exec.Cmd
+	RunningMonitors  map[int]*exec.Cmd
+	RunningExecutors map[int]*exec.Cmd
 
 	// phoenix configuration
-	Config 				*config.PhoenixConfig
+	Config *config.PhoenixConfig
+
+	//ZK enabled
+	isZK bool
 }
 
-func NewWorkerGod(config *config.PhoenixConfig) phoenix.WorkerGod {
+func NewWorkerGod(config *config.PhoenixConfig, isZK bool) phoenix.WorkerGod {
 	return &WorkerWrapper{
-		RunningMonitors: make(map[int]*exec.Cmd),
+		RunningMonitors:  make(map[int]*exec.Cmd),
 		RunningExecutors: make(map[int]*exec.Cmd),
-		Config: config,
+		Config:           config,
+		isZK:             isZK,
 	}
 }
 
@@ -70,7 +74,7 @@ func (ww *WorkerWrapper) Kill(workerId int, ret *bool) error {
 	return nil
 }
 
-func (ww *WorkerWrapper) Start(workerId int, ret* bool) error {
+func (ww *WorkerWrapper) Start(workerId int, ret *bool) error {
 
 	fmt.Println("[WorkerWrapper: Start] workerId:", workerId)
 	fmt.Println("[WorkerWrapper: Start] Start Timestamp: ", time.Now().UnixNano())
@@ -96,9 +100,8 @@ func (ww *WorkerWrapper) Start(workerId int, ret* bool) error {
 	}
 
 	// by this point, we have ascertained that the monitor and executor for workerId do not exist
-	mtor := exec.Command("init-monitor", "-workerId", strconv.Itoa(workerId))
-	etor := exec.Command("init-executor", "-workerId", strconv.Itoa(workerId))
-
+	mtor := exec.Command("init-monitor", "-workerId", strconv.Itoa(workerId), "-zk", strconv.FormatBool(ww.isZK))
+	etor := exec.Command("init-executor", "-workerId", strconv.Itoa(workerId), "-zk", strconv.FormatBool(ww.isZK))
 
 	ww.RunningMonitors[workerId] = mtor
 	ww.RunningExecutors[workerId] = etor
@@ -122,9 +125,9 @@ func (ww *WorkerWrapper) Start(workerId int, ret* bool) error {
 	}
 
 	// save output to logs
-	go writeToLog(mStdout, "logs/monitor_"+strconv.Itoa(workerId)+"_" +
+	go writeToLog(mStdout, "logs/monitor_"+strconv.Itoa(workerId)+"_"+
 		strconv.FormatInt(time.Now().Unix(), 36)+".log")
-	go writeToLog(eStdout, "logs/executor_"+strconv.Itoa(workerId)+"_" +
+	go writeToLog(eStdout, "logs/executor_"+strconv.Itoa(workerId)+"_"+
 		strconv.FormatInt(time.Now().Unix(), 36)+".log")
 
 	*ret = true
@@ -135,11 +138,9 @@ func writeToLog(out io.ReadCloser, logFileName string) {
 	scanner := bufio.NewScanner(out)
 	scanner.Split(bufio.ScanLines)
 
-	logFile, _ := os.OpenFile(logFileName, os.O_CREATE | os.O_RDWR, 0777)
+	logFile, _ := os.OpenFile(logFileName, os.O_CREATE|os.O_RDWR, 0777)
 	for scanner.Scan() {
 		m := scanner.Text()
 		logFile.WriteString(m + "\n")
 	}
 }
-
-

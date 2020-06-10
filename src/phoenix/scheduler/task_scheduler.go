@@ -18,7 +18,7 @@ type TaskScheduler struct {
 	Addr string
 
 	// map of addresses to Monitors that we are able to contact
-	MonitorClientPool 	map[string]*monitor.NodeMonitorClient
+	MonitorClientPool map[string]*monitor.NodeMonitorClient
 
 	// addresses of our workers
 	workerAddresses []string
@@ -27,10 +27,10 @@ type TaskScheduler struct {
 	workerAddrToTask map[string]map[string]bool
 
 	// map of worker address to count per jobId reservations
-	workerAddrToJobReservations map[string]map[string] int
+	workerAddrToJobReservations map[string]map[string]int
 
 	// lock around MonitorClientPool, workerAddresses, workerAddrToTask, workerIdReservations
-	workerLock	sync.Mutex
+	workerLock sync.Mutex
 
 	// Frontend Client Pool
 	FrontendClientPool map[string]phoenix.FrontendInterface
@@ -59,7 +59,7 @@ type TaskScheduler struct {
 
 var _ phoenix.TaskSchedulerInterface = new(TaskScheduler)
 
-func NewTaskScheduler(addr string, zkHostPorts []string, frontendClientPool map[string]phoenix.FrontendInterface) phoenix.TaskSchedulerInterface {
+func NewTaskScheduler(addr string, frontendClientPool map[string]phoenix.FrontendInterface, isZK bool, zkHostPorts []string) phoenix.TaskSchedulerInterface {
 
 	ts := &TaskScheduler{
 		FrontendClientPool: frontendClientPool,
@@ -80,13 +80,15 @@ func NewTaskScheduler(addr string, zkHostPorts []string, frontendClientPool map[
 		workerLock:                  sync.Mutex{},
 	}
 
-	ready := make(chan bool)
-	// dynamically update monitorClientPool
-	// dynamically update workerAddresses
-	go ts.watchWorkerNodes(zkHostPorts, ready)
+	if isZK {
+		ready := make(chan bool)
+		// dynamically update monitorClientPool
+		// dynamically update workerAddresses
+		go ts.watchWorkerNodes(zkHostPorts, ready)
 
-	// wait for scheduler to find at least one living worker
-	<-ready
+		// wait for scheduler to find at least one living worker
+		<-ready
+	}
 
 	return ts
 }
@@ -134,7 +136,6 @@ func (ts *TaskScheduler) watchWorkerNodes(zkHostPorts []string, ready chan bool)
 }
 
 func (ts *TaskScheduler) rescheduleLostTasks(children []string) {
-
 
 	// create new client pool and newWorkerIds
 	newClientPool := make(map[string]*monitor.NodeMonitorClient)
@@ -275,7 +276,7 @@ func (ts *TaskScheduler) GetTask(taskRequest types.TaskRequest, outputTask *type
 
 		// pendingTask is now inflight at workerAddrToTask
 		_, exists := ts.workerAddrToTask[taskRequest.WorkerAddr]
-		if ! exists {
+		if !exists {
 			ts.workerAddrToTask[taskRequest.WorkerAddr] = make(map[string]bool)
 		}
 
@@ -398,7 +399,7 @@ func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
 		targetMonitor, mExists := ts.MonitorClientPool[targetWorkerId]
 		ts.workerLock.Unlock()
 
-		if ! mExists {
+		if !mExists {
 			continue
 		}
 
@@ -411,12 +412,12 @@ func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
 
 		ts.workerLock.Lock()
 		_, exists := ts.workerAddrToJobReservations[targetMonitor.Addr]
-		if ! exists {
+		if !exists {
 			ts.workerAddrToJobReservations[targetMonitor.Addr] = make(map[string]int)
 		}
 
 		// targetMonitor.Addr has one more jobId in it's queue
-		ts.workerAddrToJobReservations[targetMonitor.Addr][jobId] ++
+		ts.workerAddrToJobReservations[targetMonitor.Addr][jobId]++
 		ts.workerLock.Unlock()
 
 		fmt.Printf("[TaskScheduler %s: enqueueJob]: Enqueuing reservation on monitor %s for job reservation %s\n",

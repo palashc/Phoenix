@@ -15,6 +15,7 @@ var frc = flag.String("conf", config.DefaultConfigPath, "config file")
 
 // if -1, run all workers
 var workerId = flag.Int("workerId", -1, "which workerId to run")
+var isZK = flag.Bool("zk", true, "is ZK enabled?")
 
 func noError(e error) {
 	if e != nil {
@@ -44,8 +45,8 @@ func main() {
 
 		// TODO: get a better newXXXConfig method
 		monitorAddr := rc.Monitors[i]
-		mConfig := rc.NewMonitorConfig(i, monitor.NewNodeMonitor(rc.NumSlots, executorClient, schedulerClientMap,
-			phoenix.ZkLocalServers, monitorAddr))
+		mConfig := rc.NewMonitorConfig(i, monitor.NewNodeMonitor(rc.NumSlots, executorClient,
+			schedulerClientMap, monitorAddr, *isZK, phoenix.ZkLocalServers))
 
 		log.Printf("monitor serving on %s", mConfig.Addr)
 
