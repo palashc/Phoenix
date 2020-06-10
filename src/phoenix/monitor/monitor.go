@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"path"
 	"time"
@@ -317,7 +318,9 @@ func (nm *NodeMonitor) taskLauncher() {
 		}
 
 		fmt.Println("[Monitor: TaskLauncher] About to attempt launch task, active tasks: ", nm.activeTasks)
-		nm.logTimeStats()
+		if rand.Intn(20) == 0 {
+			nm.logTimeStats()
+		}
 		nm.attemptLaunchTask()
 
 		nm.launchCond.L.Unlock()

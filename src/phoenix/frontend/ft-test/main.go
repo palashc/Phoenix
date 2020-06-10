@@ -16,6 +16,11 @@ import (
 )
 
 var frc = flag.String("conf", config.DefaultConfigPath, "config file")
+var killableWorkers = flag.Int("n", 1, "maximum number of workers to kill")
+var recoverFlag = flag.Bool("r", false, "Recover killed workers?")
+var workloadFlag = flag.String("w", "small", "Size of workload - small, medium, big")
+var seed = flag.Int64("seed", 0, "seed for random task durations")
+var meanDuration = flag.Float64("tasktime", 1.0, "job duration in second")
 
 func noError(e error) {
 	if e != nil {
@@ -25,19 +30,36 @@ func noError(e error) {
 
 const ZK_DETECT_TIME = 3 * time.Second
 
+var workloadMap = map[string][]int{
+	"small":  []int{50, 10},
+	"medium": []int{100, 25},
+	"big":    []int{200, 50},
+}
+
 func main() {
 	flag.Parse()
 
 	rc, e := config.LoadConfig(*frc)
 	noError(e)
 
+	workload, ok := workloadMap[*workloadFlag]
+	if !ok {
+		panic("Incorrect workload option")
+	}
+	if *killableWorkers >= len(rc.Monitors) {
+		panic("Can not kill all monitors")
+	}
+
 	// create just one workerGodClient for single-node configuration
-	workerGodClient := workerGod.GetNewClient(rc.WorkerGods[0])
+	var workerGodClients []phoenix.WorkerGod
+	for i := 0; i < len(rc.WorkerGods); i++ {
+		workerGodClients[i] = workerGod.GetNewClient(rc.WorkerGods[i])
+	}
 
 	// spawn new monitors and executors
 	for i := range rc.Monitors {
 		var ret bool
-		if e := workerGodClient.Start(i, &ret); e != nil || !ret {
+		if e := workerGodClients[i].Start(i, &ret); e != nil || !ret {
 			panic(e)
 		}
 	}
@@ -64,20 +86,22 @@ func main() {
 	<-feConfig.Ready
 
 	// TODO: randomize number of jobs or tasks
-	numTasks := 10
-	numJobs := 20
+	numTasks := workload[1]
+	numJobs := workload[0]
 
-	jobList := make([]*types.Job, 20)
+	jobList := make([]*types.Job, numJobs)
 	var sumOfTaskTimes float64 = 0
+	s1 := rand.NewSource(*seed)
+	r1 := rand.New(s1)
 
 	// populate jobList
 	for i := 0; i < numJobs; i++ {
 		jobid := "job" + strconv.Itoa(i)
 		tasks := make([]types.Task, 0)
+		taskTime := *meanDuration
+		taskTime *= r1.ExpFloat64()
 		for j := 0; j < numTasks; j++ {
 			taskid := jobid + "-task" + strconv.Itoa(j)
-
-			taskTime := rand.Float64()
 			sumOfTaskTimes += taskTime
 			task := types.Task{JobId: jobid, Id: taskid, T: taskTime}
 
@@ -116,15 +140,15 @@ func main() {
 
 	time.Sleep(ZK_DETECT_TIME)
 
-	// randomly kill and spawn monitors
+	//randomly kill and spawn monitors
 	workersKilled := make([]int, 0)
-	for i := 0; len(rc.Monitors)-len(workersKilled) > 1; i++ {
+	for i := 0; i < *killableWorkers; i++ {
 		var ret bool
-		if e := workerGodClient.Kill(i, &ret); e != nil || !ret {
+		if e := workerGodClients[i].Kill(i, &ret); e != nil || !ret {
 			panic(e)
 		}
 		fmt.Println("Killed workerId:", i)
-		time.Sleep(1 * time.Second)
+		time.Sleep(100 * time.Millisecond)
 
 		workersKilled = append(workersKilled, i)
 	}
@@ -132,18 +156,20 @@ func main() {
 	// sleep for Kills to take affect
 	time.Sleep(ZK_DETECT_TIME)
 
-	// bring workers back
-	for _, id := range workersKilled {
-		var ret bool
-		if e := workerGodClient.Start(id, &ret); e != nil || !ret {
-			panic(e)
+	if *recoverFlag {
+		// bring workers back
+		for _, id := range workersKilled {
+			var ret bool
+			if e := workerGodClients[id].Start(id, &ret); e != nil || !ret {
+				panic(e)
+			}
+			fmt.Println("Brought back workerId:", id)
+			time.Sleep(1 * time.Second)
 		}
-		fmt.Println("Brought back workerId:", id)
-		time.Sleep(1 * time.Second)
-	}
 
-	// sleep for Kills to take affect
-	time.Sleep(ZK_DETECT_TIME)
+		// sleep for Kills to take affect
+		time.Sleep(ZK_DETECT_TIME)
+	}
 
 	fmt.Println("Done Sleeping")
 	<-allJobsDoneSignal
@@ -153,6 +179,10 @@ func main() {
 
 	overhead := 100 * (timeTaken/theoreticalLowerBound - 1)
 
+	fmt.Printf("\n-----Summary---------\n")
+	fmt.Printf("Workload: %d Jobs %d Tasks\n", workload[0], workload[1])
+	fmt.Printf("Killed %d workers\n", *killableWorkers)
+	fmt.Printf("Recovery: %t\n", *recoverFlag)
 	fmt.Printf("Complete time taken for test in seconds: %f\n", timeTaken)
 	fmt.Printf("Total time of jobs in seconds: %f\n", sumOfTaskTimes)
 	fmt.Printf("We are within %f percent of the theoretical lower bound\n", overhead)
