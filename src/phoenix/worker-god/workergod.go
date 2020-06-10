@@ -13,28 +13,28 @@ import (
 	"time"
 )
 
-
 type WorkerWrapper struct {
 
 	// map where key is worker index and value is processId for that worker
-	RunningMonitors 	map[int] *exec.Cmd
-	RunningExecutors 	map[int] *exec.Cmd
+	RunningMonitors  map[int]*exec.Cmd
+	RunningExecutors map[int]*exec.Cmd
 
 	// phoenix configuration
-	Config 				*config.PhoenixConfig
+	Config *config.PhoenixConfig
 }
 
 func NewWorkerGod(config *config.PhoenixConfig) phoenix.WorkerGod {
 	return &WorkerWrapper{
-		RunningMonitors: make(map[int]*exec.Cmd),
+		RunningMonitors:  make(map[int]*exec.Cmd),
 		RunningExecutors: make(map[int]*exec.Cmd),
-		Config: config,
+		Config:           config,
 	}
 }
 
 func (ww *WorkerWrapper) Kill(workerId int, ret *bool) error {
 
 	fmt.Println("[WorkerWrapper: Kill] workerId:", workerId)
+	fmt.Println("[WorkerWrapper: Kill] Kill Timestamp: ", time.Now().UnixNano())
 
 	killError := false
 	errorString := ""
@@ -69,9 +69,10 @@ func (ww *WorkerWrapper) Kill(workerId int, ret *bool) error {
 	return nil
 }
 
-func (ww *WorkerWrapper) Start(workerId int, ret* bool) error {
+func (ww *WorkerWrapper) Start(workerId int, ret *bool) error {
 
 	fmt.Println("[WorkerWrapper: Start] workerId:", workerId)
+	fmt.Println("[WorkerWrapper: Start] Start Timestamp: ", time.Now().UnixNano())
 
 	errorString := ""
 	startError := false
@@ -97,7 +98,6 @@ func (ww *WorkerWrapper) Start(workerId int, ret* bool) error {
 	mtor := exec.Command("init-monitor", "-workerId", strconv.Itoa(workerId))
 	etor := exec.Command("init-executor", "-workerId", strconv.Itoa(workerId))
 
-
 	ww.RunningMonitors[workerId] = mtor
 	ww.RunningExecutors[workerId] = etor
 
@@ -120,9 +120,9 @@ func (ww *WorkerWrapper) Start(workerId int, ret* bool) error {
 	}
 
 	// save output to logs
-	go writeToLog(mStdout, "logs/monitor_"+strconv.Itoa(workerId)+"_" +
+	go writeToLog(mStdout, "logs/monitor_"+strconv.Itoa(workerId)+"_"+
 		strconv.FormatInt(time.Now().Unix(), 36)+".log")
-	go writeToLog(eStdout, "logs/executor_"+strconv.Itoa(workerId)+"_" +
+	go writeToLog(eStdout, "logs/executor_"+strconv.Itoa(workerId)+"_"+
 		strconv.FormatInt(time.Now().Unix(), 36)+".log")
 
 	*ret = true
@@ -133,11 +133,9 @@ func writeToLog(out io.ReadCloser, logFileName string) {
 	scanner := bufio.NewScanner(out)
 	scanner.Split(bufio.ScanLines)
 
-	logFile, _ := os.OpenFile(logFileName, os.O_CREATE | os.O_RDWR, 0777)
+	logFile, _ := os.OpenFile(logFileName, os.O_CREATE|os.O_RDWR, 0777)
 	for scanner.Scan() {
 		m := scanner.Text()
 		logFile.WriteString(m + "\n")
 	}
 }
-
-
