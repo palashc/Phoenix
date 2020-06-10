@@ -14,12 +14,16 @@ import (
 	"time"
 )
 
+const DefaultRandSeed int64 = -13131313
+
 var (
 	frc          = flag.String("conf", config.DefaultConfigPath, "config file")
 	useRand      = flag.Bool("useRand", false, "use random seed to generate job, default to hash based on address")
 	jobCount     = flag.Int("jobCount", 10, "number of job to generate")
 	taskCount    = flag.Int("taskCount", 10, "number of task in a job")
 	meanDuration = flag.Float64("jobDuration", 3.0, "job duration in second")
+	randSeed     = flag.Int64("randSeed", DefaultRandSeed, "task generation seed")
+	gEmulation   = flag.Bool("gEmu", false, "use google cluster workload pattern")
 )
 
 func noError(e error) {
@@ -54,11 +58,21 @@ func main() {
 	<-feConfig.Ready
 
 	if *useRand {
-		rand.Seed(time.Now().UnixNano())
+		// The case where we did not pass in a seed but still want to be rand
+		if *randSeed == DefaultRandSeed {
+			rand.Seed(time.Now().UnixNano())
+		} else {
+			rand.Seed(*randSeed)
+		}
 	} else {
-		// just some random number here
-		var randSeed int64 = 1111
-		rand.Seed(randSeed)
+		// just some random number here for the purpose of predictable workload emulation
+		var localRandSeed int64 = 1111
+		rand.Seed(localRandSeed)
+	}
+
+	var gGenerator GoogleClusterTaskGenerator
+	if *gEmulation {
+		gGenerator = NewGoogleClusterTaskGenerator(*meanDuration, *randSeed, *taskCount)
 	}
 
 	numTasks := *taskCount
@@ -76,6 +90,10 @@ func main() {
 
 		if *useRand {
 			currTaskDuration *= rand.ExpFloat64()
+		}
+
+		if *gEmulation {
+			currTaskDuration = gGenerator.GetTaskDuration()
 		}
 
 		for j := 0; j < numTasks; j++ {
