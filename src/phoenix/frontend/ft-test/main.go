@@ -19,6 +19,8 @@ var frc = flag.String("conf", config.DefaultConfigPath, "config file")
 var killableWorkers = flag.Int("n", 1, "maximum number of workers to kill")
 var recoverFlag = flag.Bool("r", false, "Recover killed workers?")
 var workloadFlag = flag.String("w", "small", "Size of workload - small, medium, big")
+var seed = flag.Bool("seed", false, "whether to use random task durations")
+var meanDuration = flag.Float64("tasktime", 1.0, "job duration in second")
 
 func noError(e error) {
 	if e != nil {
@@ -93,10 +95,12 @@ func main() {
 	for i := 0; i < numJobs; i++ {
 		jobid := "job" + strconv.Itoa(i)
 		tasks := make([]types.Task, 0)
+		taskTime := *meanDuration
 		for j := 0; j < numTasks; j++ {
+			if *seed {
+				taskTime *= r1.ExpFloat64()
+			}
 			taskid := jobid + "-task" + strconv.Itoa(j)
-
-			taskTime := r1.Float64()
 			sumOfTaskTimes += taskTime
 			task := types.Task{JobId: jobid, Id: taskid, T: taskTime}
 
