@@ -18,7 +18,7 @@ type TaskScheduler struct {
 	Addr string
 
 	// map of addresses to Monitors that we are able to contact
-	MonitorClientPool 	map[string]*monitor.NodeMonitorClient
+	MonitorClientPool map[string]*monitor.NodeMonitorClient
 
 	// addresses of our workers
 	workerAddresses []string
@@ -27,10 +27,10 @@ type TaskScheduler struct {
 	workerAddrToTask map[string]map[string]bool
 
 	// map of worker address to count per jobId reservations
-	workerAddrToJobReservations map[string]map[string] int
+	workerAddrToJobReservations map[string]map[string]int
 
 	// lock around MonitorClientPool, workerAddresses, workerAddrToTask, workerIdReservations
-	workerLock	sync.Mutex
+	workerLock sync.Mutex
 
 	// Frontend Client Pool
 	FrontendClientPool map[string]phoenix.FrontendInterface
@@ -111,7 +111,11 @@ func (ts *TaskScheduler) watchWorkerNodes(zkHostPorts []string, ready chan bool)
 	for {
 		children, _, eventChannel, err := ts.zkConn.ChildrenW(phoenix.ZK_WORKER_NODE_PATH)
 		fmt.Println("[TaskScheduler: watchWorkerNodes] children: ", children)
+		fmt.Println("[TaskScheduler: watchWorkerNodes] cluster change detected at: ", time.Now().UnixNano())
+
 		ts.rescheduleLostTasks(children)
+		fmt.Println("[TaskScheduler: watchWorkerNodes] finished sending enqueueJob goroutines at: ",
+			time.Now().UnixNano())
 
 		if err != nil {
 			panic(fmt.Errorf("[TaskScheduler: watchWorkerNodes] error in getting children of %s: %v",
@@ -130,7 +134,6 @@ func (ts *TaskScheduler) watchWorkerNodes(zkHostPorts []string, ready chan bool)
 }
 
 func (ts *TaskScheduler) rescheduleLostTasks(children []string) {
-
 
 	// create new client pool and newWorkerIds
 	newClientPool := make(map[string]*monitor.NodeMonitorClient)
@@ -271,7 +274,7 @@ func (ts *TaskScheduler) GetTask(taskRequest types.TaskRequest, outputTask *type
 
 		// pendingTask is now inflight at workerAddrToTask
 		_, exists := ts.workerAddrToTask[taskRequest.WorkerAddr]
-		if ! exists {
+		if !exists {
 			ts.workerAddrToTask[taskRequest.WorkerAddr] = make(map[string]bool)
 		}
 
@@ -394,7 +397,7 @@ func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
 		targetMonitor, mExists := ts.MonitorClientPool[targetWorkerId]
 		ts.workerLock.Unlock()
 
-		if ! mExists {
+		if !mExists {
 			continue
 		}
 
@@ -407,12 +410,12 @@ func (ts *TaskScheduler) enqueueJob(enqueueCount int, jobId string) error {
 
 		ts.workerLock.Lock()
 		_, exists := ts.workerAddrToJobReservations[targetMonitor.Addr]
-		if ! exists {
+		if !exists {
 			ts.workerAddrToJobReservations[targetMonitor.Addr] = make(map[string]int)
 		}
 
 		// targetMonitor.Addr has one more jobId in it's queue
-		ts.workerAddrToJobReservations[targetMonitor.Addr][jobId] ++
+		ts.workerAddrToJobReservations[targetMonitor.Addr][jobId]++
 		ts.workerLock.Unlock()
 
 		fmt.Printf("[TaskScheduler %s: enqueueJob]: Enqueuing reservation on monitor %s for job reservation %s\n",
