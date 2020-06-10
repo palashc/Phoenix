@@ -51,12 +51,15 @@ func main() {
 	}
 
 	// create just one workerGodClient for single-node configuration
-	workerGodClient := workerGod.GetNewClient(rc.WorkerGods[0])
+	var workerGodClients []phoenix.WorkerGod
+	for i := 0; i < len(rc.WorkerGods); i++ {
+		workerGodClients[i] = workerGod.GetNewClient(rc.WorkerGods[i])
+	}
 
 	// spawn new monitors and executors
 	for i := range rc.Monitors {
 		var ret bool
-		if e := workerGodClient.Start(i, &ret); e != nil || !ret {
+		if e := workerGodClients[i].Start(i, &ret); e != nil || !ret {
 			panic(e)
 		}
 	}
@@ -141,7 +144,7 @@ func main() {
 	workersKilled := make([]int, 0)
 	for i := 0; i < *killableWorkers; i++ {
 		var ret bool
-		if e := workerGodClient.Kill(i, &ret); e != nil || !ret {
+		if e := workerGodClients[i].Kill(i, &ret); e != nil || !ret {
 			panic(e)
 		}
 		fmt.Println("Killed workerId:", i)
@@ -157,7 +160,7 @@ func main() {
 		// bring workers back
 		for _, id := range workersKilled {
 			var ret bool
-			if e := workerGodClient.Start(id, &ret); e != nil || !ret {
+			if e := workerGodClients[id].Start(id, &ret); e != nil || !ret {
 				panic(e)
 			}
 			fmt.Println("Brought back workerId:", id)
