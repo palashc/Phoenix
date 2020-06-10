@@ -35,6 +35,7 @@ func NewWorkerGod(config *config.PhoenixConfig) phoenix.WorkerGod {
 func (ww *WorkerWrapper) Kill(workerId int, ret *bool) error {
 
 	fmt.Println("[WorkerWrapper: Kill] workerId:", workerId)
+	fmt.Println("[WorkerWrapper: Kill] Kill Timestamp: ", time.Now().UnixNano())
 
 	killError := false
 	errorString := ""
@@ -72,6 +73,7 @@ func (ww *WorkerWrapper) Kill(workerId int, ret *bool) error {
 func (ww *WorkerWrapper) Start(workerId int, ret* bool) error {
 
 	fmt.Println("[WorkerWrapper: Start] workerId:", workerId)
+	fmt.Println("[WorkerWrapper: Start] Start Timestamp: ", time.Now().UnixNano())
 
 	errorString := ""
 	startError := false

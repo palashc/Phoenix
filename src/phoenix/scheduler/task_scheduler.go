@@ -111,7 +111,11 @@ func (ts *TaskScheduler) watchWorkerNodes(zkHostPorts []string, ready chan bool)
 	for {
 		children, _, eventChannel, err := ts.zkConn.ChildrenW(phoenix.ZK_WORKER_NODE_PATH)
 		fmt.Println("[TaskScheduler: watchWorkerNodes] children: ", children)
+		fmt.Println("[TaskScheduler: watchWorkerNodes] cluster change detected at: ", time.Now().UnixNano())
+
 		ts.rescheduleLostTasks(children)
+		fmt.Println("[TaskScheduler: watchWorkerNodes] finished sending enqueueJob goroutines at: ",
+			time.Now().UnixNano())
 
 		if err != nil {
 			panic(fmt.Errorf("[TaskScheduler: watchWorkerNodes] error in getting children of %s: %v",
