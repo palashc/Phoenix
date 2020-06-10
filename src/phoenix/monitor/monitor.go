@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"path"
 	"time"
@@ -204,17 +205,23 @@ func (nm *NodeMonitor) getTask(taskReservation types.TaskReservation) (*types.Ta
 	}
 	jobID := taskReservation.JobID
 
-	var task types.Task
-	taskRequest := types.TaskRequest{WorkerAddr: nm.addr, Task: &task}
-	err := schedulerClient.GetTask(jobID, &taskRequest)
+	var assignedTask *types.Task = &types.Task{}
+	taskRequest := types.TaskRequest{WorkerAddr: nm.addr, JobId: jobID}
+	fmt.Printf("[Monitor: getTask]: Calling getTask on jobId %s with workerAddr: %s\n", jobID, nm.addr)
+	err := schedulerClient.GetTask(taskRequest, assignedTask)
 
-	fmt.Printf("[Monitor: getTask] called GetTask for %s: got %v\n", jobID, taskRequest)
+	fmt.Printf("[Monitor: getTask] called GetTask for %s: got %v\n", jobID, assignedTask)
 
 	if err != nil {
 		return nil, fmt.Errorf("[getTask] Unable to get task %v from scheduler %v : %q", jobID, schedulerAddr, err)
 	}
 
-	return taskRequest.Task, nil
+	// no task assigned
+	if assignedTask.T == 0 {
+		return nil, nil
+	} else {
+		return assignedTask, nil
+	}
 }
 
 /*
@@ -232,9 +239,11 @@ func (nm *NodeMonitor) launchTask(task types.Task, reservation types.TaskReserva
 	// fmt.Println("[Monitor: launchTask] Just launched task: ", task)
 
 	if err != nil {
+		fmt.Printf("[LaunchTask] Error when trying to launch task on executor")
 		return err
 	}
 	if !ret {
+		fmt.Printf("[LaunchTask] Unable to launch task, executor returned false")
 		return fmt.Errorf("[LaunchTask] Unable to launch task, executor returned false")
 	}
 
@@ -264,6 +273,7 @@ func (nm *NodeMonitor) attemptLaunchTask() {
 				nm.timeStats.QueueTime = append(nm.timeStats.QueueTime, float64(now.Sub(taskR.RecvTS)/timeStatsUnit))
 				err := nm.getAndLaunchTask(taskR)
 				if err != nil {
+					fmt.Println(err)
 					panic("Unable to launch next task")
 				}
 			}
@@ -308,7 +318,9 @@ func (nm *NodeMonitor) taskLauncher() {
 		}
 
 		fmt.Println("[Monitor: TaskLauncher] About to attempt launch task, active tasks: ", nm.activeTasks)
-		nm.logTimeStats()
+		if rand.Intn(20) == 0 {
+			nm.logTimeStats()
+		}
 		nm.attemptLaunchTask()
 
 		nm.launchCond.L.Unlock()

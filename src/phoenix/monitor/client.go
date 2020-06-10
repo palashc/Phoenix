@@ -7,13 +7,13 @@ import (
 )
 
 type NodeMonitorClient struct {
-	addr string
+	Addr string
 	conn *rpc.Client
 	lock sync.Mutex
 }
 
 func GetNewClient(addr string) *NodeMonitorClient {
-	return &NodeMonitorClient{addr: addr}
+	return &NodeMonitorClient{Addr: addr}
 }
 
 func (nmc *NodeMonitorClient) rpcConn() error {
@@ -25,7 +25,7 @@ func (nmc *NodeMonitorClient) rpcConn() error {
 	}
 
 	var err error
-	nmc.conn, err = rpc.DialHTTP("tcp", nmc.addr)
+	nmc.conn, err = rpc.DialHTTP("tcp", nmc.Addr)
 	if err != nil {
 		nmc.conn = nil
 	}

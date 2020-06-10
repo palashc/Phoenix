@@ -47,13 +47,13 @@ func (tsc *TaskSchedulerClient) SubmitJob(job types.Job, submitResult *bool) err
 	return nil
 }
 
-func (tsc *TaskSchedulerClient) GetTask(taskId string, taskRequest *types.TaskRequest) error {
+func (tsc *TaskSchedulerClient) GetTask(taskRequest types.TaskRequest, task *types.Task) error {
 	err := tsc.rpcConn()
 	if err != nil {
 		return err
 	}
 
-	err = tsc.conn.Call("TaskScheduler.GetTask", taskId, taskRequest)
+	err = tsc.conn.Call("TaskScheduler.GetTask", taskRequest, task)
 	if err != nil {
 		return err
 	}

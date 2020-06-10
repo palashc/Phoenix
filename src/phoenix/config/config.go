@@ -33,6 +33,12 @@ type TaskSchedulerConfig struct {
 	Ready         chan bool
 }
 
+type WorkerGodConfig struct {
+	Addr      string
+	WorkerGod phoenix.WorkerGod
+	Ready     chan bool
+}
+
 //type JobGeneratorConfig struct {
 //	Seed			int
 //	TaskDuration	int
@@ -48,6 +54,7 @@ type PhoenixConfig struct {
 	Schedulers []string
 	Monitors   []string
 	Executors  []string
+	WorkerGods []string
 }
 
 func (pc *PhoenixConfig) NewFrontendConfig(i int, fe phoenix.FrontendInterface) *FrontendConfig {
@@ -79,6 +86,14 @@ func (pc *PhoenixConfig) NewExecutorConfig(i int, ec phoenix.ExecutorInterface) 
 		Addr:     pc.Executors[i],
 		Executor: ec,
 		Ready:    make(chan bool, 1),
+	}
+}
+
+func (pc *PhoenixConfig) NewWorkerGodConfig(i int, ww phoenix.WorkerGod) *WorkerGodConfig {
+	return &WorkerGodConfig{
+		Addr:      pc.WorkerGods[i],
+		WorkerGod: ww,
+		Ready:     make(chan bool, 1),
 	}
 }
 

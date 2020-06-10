@@ -48,4 +48,5 @@ func (g GoogleClusterTaskGenerator) GetTaskDuration() float64 {
 		}
 	}
 
+	return g.TaskDuration
 }
