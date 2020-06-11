@@ -16,6 +16,7 @@ const DefaultSlotCount = 4
 
 var frc = flag.String("conf", config.DefaultConfigPath, "config file")
 var schedId = flag.Int("schedId", -1, "which schedulerId to run")
+var isZK = flag.Bool("zk", true, "is ZK enabled?")
 
 func noError(e error) {
 	if e != nil {
@@ -50,7 +51,7 @@ func main() {
 		fmt.Println("Launching scheduler at ", schedulerAddr)
 
 		sConfig := rc.NewTaskSchedulerConfig(i,
-			scheduler.NewTaskScheduler(schedulerAddr, phoenix.ZkLocalServers, frontendClientMap))
+			scheduler.NewTaskScheduler(schedulerAddr, frontendClientMap, *isZK, phoenix.ZkLocalServers))
 
 		// default slot count = 4
 		log.Printf("scheduler serving on %s", sConfig.Addr)

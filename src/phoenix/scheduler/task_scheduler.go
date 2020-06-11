@@ -59,7 +59,7 @@ type TaskScheduler struct {
 
 var _ phoenix.TaskSchedulerInterface = new(TaskScheduler)
 
-func NewTaskScheduler(addr string, zkHostPorts []string, frontendClientPool map[string]phoenix.FrontendInterface) phoenix.TaskSchedulerInterface {
+func NewTaskScheduler(addr string, frontendClientPool map[string]phoenix.FrontendInterface, isZK bool, zkHostPorts []string) phoenix.TaskSchedulerInterface {
 
 	ts := &TaskScheduler{
 		FrontendClientPool: frontendClientPool,
@@ -80,13 +80,15 @@ func NewTaskScheduler(addr string, zkHostPorts []string, frontendClientPool map[
 		workerLock:                  sync.Mutex{},
 	}
 
-	ready := make(chan bool)
-	// dynamically update monitorClientPool
-	// dynamically update workerAddresses
-	go ts.watchWorkerNodes(zkHostPorts, ready)
+	if isZK {
+		ready := make(chan bool)
+		// dynamically update monitorClientPool
+		// dynamically update workerAddresses
+		go ts.watchWorkerNodes(zkHostPorts, ready)
 
-	// wait for scheduler to find at least one living worker
-	<-ready
+		// wait for scheduler to find at least one living worker
+		<-ready
+	}
 
 	return ts
 }

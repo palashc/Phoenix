@@ -3,7 +3,6 @@ package worker_god
 import (
 	"bufio"
 	"fmt"
-	"github.com/pkg/errors"
 	"io"
 	"os"
 	"os/exec"
@@ -11,6 +10,8 @@ import (
 	"phoenix/config"
 	"strconv"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 type WorkerWrapper struct {
@@ -21,13 +22,17 @@ type WorkerWrapper struct {
 
 	// phoenix configuration
 	Config *config.PhoenixConfig
+
+	//ZK enabled
+	isZK bool
 }
 
-func NewWorkerGod(config *config.PhoenixConfig) phoenix.WorkerGod {
+func NewWorkerGod(config *config.PhoenixConfig, isZK bool) phoenix.WorkerGod {
 	return &WorkerWrapper{
 		RunningMonitors:  make(map[int]*exec.Cmd),
 		RunningExecutors: make(map[int]*exec.Cmd),
 		Config:           config,
+		isZK:             isZK,
 	}
 }
 
@@ -95,8 +100,8 @@ func (ww *WorkerWrapper) Start(workerId int, ret *bool) error {
 	}
 
 	// by this point, we have ascertained that the monitor and executor for workerId do not exist
-	mtor := exec.Command("init-monitor", "-workerId", strconv.Itoa(workerId))
-	etor := exec.Command("init-executor", "-workerId", strconv.Itoa(workerId))
+	mtor := exec.Command("init-monitor", "-workerId", strconv.Itoa(workerId), "-zk", strconv.FormatBool(ww.isZK))
+	etor := exec.Command("init-executor", "-workerId", strconv.Itoa(workerId), "-zk", strconv.FormatBool(ww.isZK))
 
 	ww.RunningMonitors[workerId] = mtor
 	ww.RunningExecutors[workerId] = etor
