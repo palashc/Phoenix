@@ -51,7 +51,7 @@ func main() {
 		fmt.Println("Launching scheduler at ", schedulerAddr)
 
 		sConfig := rc.NewTaskSchedulerConfig(i,
-			scheduler.NewTaskScheduler(schedulerAddr, frontendClientMap, *isZK, phoenix.ZkLocalServers))
+			scheduler.NewTaskScheduler(schedulerAddr, frontendClientMap, *isZK, phoenix.ZkLocalServers, rc.Monitors))
 
 		// default slot count = 4
 		log.Printf("scheduler serving on %s", sConfig.Addr)
