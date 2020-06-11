@@ -41,7 +41,7 @@ type NodeMonitor struct {
 }
 
 func NewNodeMonitor(slotCount int, executorClient phoenix.ExecutorInterface,
-	schedulers map[string]phoenix.TaskSchedulerInterface, zkHostPorts []string, addr string) *NodeMonitor {
+	schedulers map[string]phoenix.TaskSchedulerInterface, addr string, isZK bool, zkHostPorts []string) *NodeMonitor {
 
 	logFile, err := os.OpenFile("logs/monitor_time_stats_"+addr+".log", os.O_CREATE|os.O_WRONLY, 0777)
 	if err != nil {
@@ -62,7 +62,9 @@ func NewNodeMonitor(slotCount int, executorClient phoenix.ExecutorInterface,
 		timeStatsLog:     logFile,
 	}
 
-	nm.registerMonitorZK(zkHostPorts)
+	if isZK {
+		nm.registerMonitorZK(zkHostPorts)
+	}
 	go nm.taskLauncher()
 
 	return nm
