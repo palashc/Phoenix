@@ -59,7 +59,7 @@ type TaskScheduler struct {
 
 var _ phoenix.TaskSchedulerInterface = new(TaskScheduler)
 
-func NewTaskScheduler(addr string, frontendClientPool map[string]phoenix.FrontendInterface, isZK bool, zkHostPorts []string) phoenix.TaskSchedulerInterface {
+func NewTaskScheduler(addr string, frontendClientPool map[string]phoenix.FrontendInterface, isZK bool, zkHostPorts []string, children []string) phoenix.TaskSchedulerInterface {
 
 	ts := &TaskScheduler{
 		FrontendClientPool: frontendClientPool,
@@ -88,6 +88,8 @@ func NewTaskScheduler(addr string, frontendClientPool map[string]phoenix.Fronten
 
 		// wait for scheduler to find at least one living worker
 		<-ready
+	} else {
+		ts.rescheduleLostTasks(children)		
 	}
 
 	return ts
