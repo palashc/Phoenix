@@ -8,7 +8,7 @@ import (
 )
 
 var frc = flag.String("conf", config.DefaultConfigPath, "config file")
-var isZK = flag.Bool("zk", true, "is ZK enabled?")
+var isZK = flag.Bool("zk", false, "is ZK enabled?")
 
 // if workerId is 0, run the first god
 var workerId = flag.Int("workerId", 0, "which workerId to run")

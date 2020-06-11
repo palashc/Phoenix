@@ -15,7 +15,7 @@ var frc = flag.String("conf", config.DefaultConfigPath, "config file")
 
 // if -1, run all workers
 var workerId = flag.Int("workerId", -1, "which workerId to run")
-var isZK = flag.Bool("zk", true, "is ZK enabled?")
+var isZK = flag.Bool("zk", false, "is ZK enabled?")
 
 func noError(e error) {
 	if e != nil {

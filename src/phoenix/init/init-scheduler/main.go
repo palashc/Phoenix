@@ -16,7 +16,7 @@ const DefaultSlotCount = 4
 
 var frc = flag.String("conf", config.DefaultConfigPath, "config file")
 var schedId = flag.Int("schedId", -1, "which schedulerId to run")
-var isZK = flag.Bool("zk", true, "is ZK enabled?")
+var isZK = flag.Bool("zk", false, "is ZK enabled?")
 
 func noError(e error) {
 	if e != nil {
