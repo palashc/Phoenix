@@ -13,8 +13,8 @@ type Task struct {
 }
 
 type TaskRequest struct {
-	JobId 	 	string
-	WorkerAddr	string
+	JobId      string
+	WorkerAddr string
 }
 
 type WorkerTaskCompleteMsg struct {

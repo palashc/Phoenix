@@ -33,7 +33,6 @@ func main() {
 	phoenixConfig.Executors = make([]string, *nMonitors)
 	phoenixConfig.WorkerGods = make([]string, *nMonitors)
 
-
 	ipAddrs := strings.Split(*ips, ",")
 	if nMachine := len(ipAddrs); nMachine > 0 {
 		for i := 0; i < *nSchedulers; i++ {

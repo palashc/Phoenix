@@ -6,3 +6,4 @@ src/golang.org
 
 .idea
 *.log
+*.swp
