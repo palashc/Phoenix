@@ -5,9 +5,9 @@ Phoenix is a fault-tolerant distibuted low-latency scheduler based on [Sparrow](
 ## Architecture
 The architecture of Phoenix is largely similar to that of Sparrow. The main components are: Schedulers, Node Monitors, Executors and Frontends. The overview of the Phoenix scheduling environment and the scheduling workflow can be seen below:
 
-![alt text](https://drive.google.com/file/d/1k58wUNP_2JG-fz9-cach8n7rFlsey6oG/view?usp=sharing)
+![alt text](doc/archi.jpeg)
 
-![alt text](https://drive.google.com/file/d/1OD99vImaSprVz6LyBjxXt0iJS_ESjViC/view?usp=sharing)
+![alt text](doc/rpc.jpeg)
 
 ## Prerequisites
 
