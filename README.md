@@ -2,6 +2,8 @@
 
 Phoenix is a fault-tolerant distibuted low-latency scheduler based on [Sparrow](https://cs.stanford.edu/~matei/papers/2013/sosp_sparrow.pdf) implemented in Go. It uses [Zookeeper](https://github.com/apache/zookeeper) to implement group membership for worker nodes. Phoenix handles worker failures and recovers incomplete jobs, unlike Sparrow.
 
+Our paper can be found [here](https://drive.google.com/file/d/1_zOaN7zXSuxQXVojkDDDKpAYonqqD8Nt/view?usp=sharing).
+
 ## Architecture
 The architecture of Phoenix is largely similar to that of Sparrow. The main components are: Schedulers, Node Monitors, Executors and Frontends. The overview of the Phoenix scheduling environment and the scheduling workflow can be seen below:
 
