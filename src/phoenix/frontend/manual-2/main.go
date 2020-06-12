@@ -32,12 +32,16 @@ func main() {
 	noError(e)
 
 	// create just one workerGodClient for single-node configuration
-	workerGodClient := workerGod.GetNewClient(rc.WorkerGods[0])
+	workerGodClients := make([]phoenix.WorkerGod, 0)
+
+	for _, addr := range rc.WorkerGods {
+		workerGodClients = append(workerGodClients, workerGod.GetNewClient(addr))
+	}
 
 	// spawn new monitors and executors
 	for i := range rc.Monitors {
 		var ret bool
-		if e := workerGodClient.Start(i, &ret); e != nil || !ret {
+		if e := workerGodClients[i].Start(i, &ret); e != nil || !ret {
 			panic(e)
 		}
 	}
@@ -120,7 +124,7 @@ func main() {
 	workersKilled := make([]int, 0)
 	for i := 0; len(rc.Monitors)-len(workersKilled) > 1; i++ {
 		var ret bool
-		if e := workerGodClient.Kill(i, &ret); e != nil || !ret {
+		if e := workerGodClients[i].Kill(i, &ret); e != nil || !ret {
 			panic(e)
 		}
 		fmt.Println("Killed workerId:", i)
@@ -133,9 +137,9 @@ func main() {
 	time.Sleep(ZK_DETECT_TIME)
 
 	// bring workers back
-	for _, id := range workersKilled {
+	for i, id := range workersKilled {
 		var ret bool
-		if e := workerGodClient.Start(id, &ret); e != nil || !ret {
+		if e := workerGodClients[i].Start(id, &ret); e != nil || !ret {
 			panic(e)
 		}
 		fmt.Println("Brought back workerId:", id)

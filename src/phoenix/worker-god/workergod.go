@@ -100,8 +100,15 @@ func (ww *WorkerWrapper) Start(workerId int, ret *bool) error {
 	}
 
 	// by this point, we have ascertained that the monitor and executor for workerId do not exist
-	mtor := exec.Command("init-monitor", "-workerId", strconv.Itoa(workerId), "-zk", strconv.FormatBool(ww.isZK))
-	etor := exec.Command("init-executor", "-workerId", strconv.Itoa(workerId), "-zk", strconv.FormatBool(ww.isZK))
+	fmt.Println("WorkerGod receives isZK: ", ww.isZK)
+    
+    var mtor *exec.Cmd
+    if ww.isZK {
+	    mtor = exec.Command("init-monitor", "-workerId", strconv.Itoa(workerId), "-zk")
+	} else {
+        mtor = exec.Command("init-monitor", "-workerId", strconv.Itoa(workerId))
+    }
+    etor := exec.Command("init-executor", "-workerId", strconv.Itoa(workerId))
 
 	ww.RunningMonitors[workerId] = mtor
 	ww.RunningExecutors[workerId] = etor

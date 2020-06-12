@@ -28,7 +28,6 @@ var (
 	gEmulation   = flag.Bool("gEmu", false, "use google cluster workload pattern")
 	jobSendGap	 = flag.Float64("sendGap", 1.0, "gap between consecutive job sends in second")
 
-    killableWorkers = flag.Int("n", 0, "maximum number of workers to kill")
     recoverFlag = flag.Bool("r", false, "Recover killed workers?")
     workloadFlag = flag.String("w", "small", "Size of workload - small, medium, big")
 )
@@ -56,9 +55,6 @@ func main() {
 	workload, ok := workloadMap[*workloadFlag]
 	if !ok {
 		panic("Incorrect workload option")
-	}
-	if *killableWorkers >= len(rc.Monitors) {
-		panic("Can not kill all monitors")
 	}
 
 	// create just one workerGodClient for single-node configuration
@@ -177,6 +173,32 @@ func main() {
 			sendJobsChan <- jobList[i]
 
 			time.Sleep(time.Duration(1000 * *jobSendGap) * time.Millisecond)
+
+			if i % 3 == 0 {
+				if i % 2 == 0 {
+					var ret bool
+					if e := workerGodClients[0].Kill(0, &ret); e != nil || !ret {
+						panic(e)
+					}
+					fmt.Println("Killed workerId:", 0)
+
+					if e := workerGodClients[1].Kill(1, &ret); e != nil || !ret {
+						panic(e)
+					}
+					fmt.Println("Killed workerId:", 1)
+				} else {
+					var ret bool
+					if e := workerGodClients[0].Start(0, &ret); e != nil || !ret {
+						panic(e)
+					}
+					fmt.Println("Started workerId:", 0)
+
+					if e := workerGodClients[1].Start(1, &ret); e != nil || !ret {
+						panic(e)
+					}
+					fmt.Println("Started workerId:", 1)
+				}
+			}
 		}
 	}()
 
@@ -189,38 +211,6 @@ func main() {
 		allJobsDoneSignal <- true
 	}()
 
-	time.Sleep(ZK_DETECT_TIME)
-
-	//randomly kill and spawn monitors
-	workersKilled := make([]int, 0)
-	for i := 0; i < *killableWorkers; i++ {
-		var ret bool
-		if e := workerGodClients[i].Kill(i, &ret); e != nil || !ret {
-			panic(e)
-		}
-		fmt.Println("Killed workerId:", i)
-		time.Sleep(100 * time.Millisecond)
-
-		workersKilled = append(workersKilled, i)
-	}
-
-	// sleep for Kills to take affect
-	time.Sleep(ZK_DETECT_TIME)
-
-	if *recoverFlag {
-		// bring workers back
-		for _, id := range workersKilled {
-			var ret bool
-			if e := workerGodClients[id].Start(id, &ret); e != nil || !ret {
-				panic(e)
-			}
-			fmt.Println("Brought back workerId:", id)
-			time.Sleep(1 * time.Second)
-		}
-
-		// sleep for Kills to take affect
-		time.Sleep(ZK_DETECT_TIME)
-	}
 
 	fmt.Println("Done Sleeping")
 	<-allJobsDoneSignal
@@ -232,7 +222,6 @@ func main() {
 
 	fmt.Printf("\n-----Summary---------\n")
 	fmt.Printf("Workload: %d Jobs %d Tasks\n", workload[0], workload[1])
-	fmt.Printf("Killed %d workers\n", *killableWorkers)
 	fmt.Printf("Recovery: %t\n", *recoverFlag)
 	fmt.Printf("Complete time taken for test in seconds: %f\n", timeTaken)
 	fmt.Printf("Total time of jobs in seconds: %f\n", sumOfTaskTimes)

@@ -8,7 +8,6 @@ import (
 	"phoenix/config"
 	"phoenix/frontend"
 
-	//"phoenix/executor"
 	"phoenix/monitor"
 	"phoenix/scheduler"
 )
@@ -16,7 +15,8 @@ import (
 const DefaultSlotCount = 4
 
 var frc = flag.String("conf", config.DefaultConfigPath, "config file")
-var isZK = flag.Bool("zk", true, "is ZK enabled?")
+var schedId = flag.Int("schedId", -1, "which schedulerId to run")
+var isZK = flag.Bool("zk", false, "is ZK enabled?")
 
 func noError(e error) {
 	if e != nil {
@@ -25,6 +25,7 @@ func noError(e error) {
 }
 
 func main() {
+	fmt.Println("HELLOOO")
 	flag.Parse()
 
 	rc, e := config.LoadConfig(*frc)
@@ -40,28 +41,39 @@ func main() {
 		frontendClientMap[frontendAddr] = frontend.GetNewClient(frontendAddr)
 	}
 
+        fmt.Println("OKOK")
 	run := func(i int) {
 		if i > len(rc.Monitors) {
 			noError(fmt.Errorf("index out of range: %d", i))
 		}
 
 		schedulerAddr := rc.Schedulers[i]
+		fmt.Println("Launching scheduler at ", schedulerAddr)
+
 		sConfig := rc.NewTaskSchedulerConfig(i,
-			scheduler.NewTaskScheduler(schedulerAddr, frontendClientMap, *isZK, phoenix.ZkLocalServers))
+			scheduler.NewTaskScheduler(schedulerAddr, frontendClientMap, *isZK, phoenix.ZkLocalServers, rc.Monitors))
 
 		// default slot count = 4
 		log.Printf("scheduler serving on %s", sConfig.Addr)
 		noError(scheduler.ServeTaskScheduler(sConfig))
 	}
 
+        fmt.Println("After run def")
+
 	n := 0
 
 	for i, _ := range rc.Schedulers {
-		go run(i)
-		n++
+		if *schedId  == -1 {
+			go run(i)
+			n++
+		} else if *schedId == i {
+			go run(i)
+			n++
+		}
 	}
 
 	if n > 0 {
 		select {}
 	}
+
 }

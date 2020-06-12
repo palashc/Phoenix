@@ -62,6 +62,8 @@ func NewNodeMonitor(slotCount int, executorClient phoenix.ExecutorInterface,
 		timeStatsLog:     logFile,
 	}
 
+	fmt.Println("What isZK: ", isZK)
+
 	if isZK {
 		nm.registerMonitorZK(zkHostPorts)
 	}
