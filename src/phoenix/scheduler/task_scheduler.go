@@ -186,6 +186,9 @@ func (ts *TaskScheduler) rescheduleLostTasks(children []string) {
 			ts.workerLock.Unlock()
 		}
 
+		var wg sync.WaitGroup
+		wg.Add(len(makeupJobsMap))
+
 		for jobId := range makeupJobsMap {
 			fmt.Printf("[TaskScheduler: rescheduleLostTasks] Rescheduling jobId:%s\n", jobId)
 
@@ -195,8 +198,15 @@ func (ts *TaskScheduler) rescheduleLostTasks(children []string) {
 
 			// TODO: optimize the enqueueJob reqeusts that we send
 			// currently we liberally resubmit the entire job
-			go ts.enqueueJob(len(job.Tasks)*DefaultSampleRatio, jobId)
+
+
+			go func() {
+				ts.enqueueJob(len(job.Tasks)*DefaultSampleRatio, jobId)
+				wg.Done()
+			}()
 		}
+
+		wg.Wait()
 	}
 
 	// update client pool and workerAddresses
